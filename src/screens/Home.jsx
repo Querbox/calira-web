@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { TIME_SLOTS, painColor, painLabel, painTypeLabel } from '../lib/pain'
 import { todayKey, dayKeyOf } from '../lib/storage'
 import { useData, actions } from '../lib/store'
@@ -40,8 +40,15 @@ export default function Home() {
           <Icon name="clock" size={12} /> {dateLabel}
         </div>
         <h1 className="page-header__title">
-          {greeting}, <em>heute.</em>
+          {data.name ? (
+            <>{greeting}, <em>{data.name}.</em></>
+          ) : (
+            <>{greeting}.</>
+          )}
         </h1>
+        {!data.name && (
+          <NamePrompt />
+        )}
       </header>
 
       {activeFlare && (
@@ -187,6 +194,44 @@ export default function Home() {
       {sheet === 'checkin' && <CheckInSheet defaultSlot={defaultSlot} onClose={() => setSheet(null)} />}
       {sheet === 'med' && <MedicationSheet onClose={() => setSheet(null)} />}
     </>
+  )
+}
+
+function NamePrompt() {
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState('')
+  const inputRef = useRef(null)
+
+  useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
+
+  function save() {
+    if (value.trim()) actions.setName(value)
+    setEditing(false)
+  }
+
+  if (!editing) {
+    return (
+      <button className="name-prompt" onClick={() => setEditing(true)}>
+        Wie soll ich dich nennen? <Icon name="arrow" size={12} />
+      </button>
+    )
+  }
+
+  return (
+    <form
+      className="name-prompt name-prompt--editing"
+      onSubmit={(e) => { e.preventDefault(); save() }}
+    >
+      <input
+        ref={inputRef}
+        className="input name-prompt__input"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="dein Vorname"
+        onBlur={save}
+        maxLength={32}
+      />
+    </form>
   )
 }
 

@@ -54,6 +54,42 @@
   font-weight: 500;
 }
 
+/* ─── Inline name prompt under greeting ────────────────────── */
+.name-prompt {
+  font-family: var(--sans);
+  font-style: italic;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--clay);
+  margin-top: 4px;
+  padding: 4px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  text-align: left;
+  align-self: flex-start;
+  position: relative;
+}
+.name-prompt::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 18px; bottom: 2px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.35;
+  transition: opacity 0.2s;
+}
+.name-prompt:hover::after { opacity: 1; }
+.name-prompt--editing { padding: 0; margin-top: 6px; align-self: stretch; }
+.name-prompt--editing::after { display: none; }
+.name-prompt__input {
+  border-bottom: 1px solid var(--clay) !important;
+  font-style: italic !important;
+  color: var(--clay) !important;
+}
+
 /* ─── Section ──────────────────────────────────────────────── */
 .section { display: flex; flex-direction: column; gap: 14px; }
 .section__head {

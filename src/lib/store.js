@@ -49,7 +49,10 @@ export const actions = {
     set((s) => ({ ...s, [kind]: s[kind].filter((x) => x.id !== id) }))
   },
   reset() {
-    set({ checkIns: [], medications: [], flares: [], notes: {} })
+    set((s) => ({ checkIns: [], medications: [], flares: [], notes: {}, name: s.name }))
+  },
+  setName(name) {
+    set((s) => ({ ...s, name: (name || '').trim() }))
   },
   seedDemo() {
     const now = Date.now()

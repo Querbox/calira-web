@@ -26,6 +26,22 @@ export default function Settings() {
 
       <section className="section">
         <div className="section__head">
+          <div className="section__title">Name</div>
+        </div>
+        <input
+          className="input"
+          value={data.name || ''}
+          onChange={(e) => actions.setName(e.target.value)}
+          placeholder="dein Vorname (z. B. Jana)"
+          maxLength={32}
+        />
+        <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>
+          Wird nur in der Begrüßung auf der Startseite verwendet.
+        </p>
+      </section>
+
+      <section className="section">
+        <div className="section__head">
           <div className="section__title">Deine Daten</div>
         </div>
         <p className="muted">

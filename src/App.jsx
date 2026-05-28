@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useData } from './lib/store'
 import Home from './screens/Home'
 import History from './screens/History'
 import Settings from './screens/Settings'
@@ -12,8 +13,14 @@ const TABS = [
 ]
 
 export default function App() {
+  const data = useData()
   const [tab, setTab] = useState('home')
   const pagesRef = useRef(null)
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', data.theme || 'clay')
+    document.documentElement.setAttribute('data-font', data.fontMode || 'quiet')
+  }, [data.theme, data.fontMode])
 
   function goto(next) {
     if (next === tab) return

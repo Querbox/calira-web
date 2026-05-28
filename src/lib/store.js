@@ -54,6 +54,14 @@ export const actions = {
   setName(name) {
     set((s) => ({ ...s, name: (name || '').trim() }))
   },
+  setTheme(theme) {
+    set((s) => ({ ...s, theme }))
+    document.documentElement.setAttribute('data-theme', theme)
+  },
+  setFontMode(mode) {
+    set((s) => ({ ...s, fontMode: mode }))
+    document.documentElement.setAttribute('data-font', mode)
+  },
   seedDemo() {
     const now = Date.now()
     const day = 86400000

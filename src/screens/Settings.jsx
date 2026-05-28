@@ -1,6 +1,22 @@
 import { useData, actions } from '../lib/store'
 import Icon from '../components/Icon'
 
+const THEMES = [
+  { id: 'clay',  label: 'Clay',  swatch: '#d28868' },
+  { id: 'rose',  label: 'Rose',  swatch: '#d97a8a' },
+  { id: 'amber', label: 'Amber', swatch: '#d4b76a' },
+  { id: 'sage',  label: 'Sage',  swatch: '#8aa890' },
+  { id: 'ocean', label: 'Ocean', swatch: '#7aa3c2' },
+  { id: 'plum',  label: 'Plum',  swatch: '#b87a9a' },
+]
+
+const FONTS = [
+  { id: 'quiet',     label: 'Quiet',     desc: 'Fraunces · Instrument Sans', serif: 'Fraunces, serif' },
+  { id: 'editorial', label: 'Editorial', desc: 'Newsreader · Public Sans',   serif: 'Newsreader, serif' },
+  { id: 'modern',    label: 'Modern',    desc: 'DM Serif Text · Outfit',     serif: '"DM Serif Text", serif' },
+  { id: 'mono',      label: 'Mono',      desc: 'JetBrains Mono — alles',     serif: '"JetBrains Mono", monospace' },
+]
+
 export default function Settings() {
   const data = useData()
   const total = data.checkIns.length + data.medications.length + data.flares.length
@@ -38,6 +54,46 @@ export default function Settings() {
         <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>
           Wird nur in der Begrüßung auf der Startseite verwendet.
         </p>
+      </section>
+
+      <section className="section">
+        <div className="section__head">
+          <div className="section__title">Akzentfarbe</div>
+          <div className="section__meta">{THEMES.find((t) => t.id === (data.theme || 'clay'))?.label}</div>
+        </div>
+        <div className="theme-picker">
+          {THEMES.map((t) => (
+            <button
+              key={t.id}
+              className={`theme-swatch ${data.theme === t.id || (!data.theme && t.id === 'clay') ? 'is-active' : ''}`}
+              onClick={() => actions.setTheme(t.id)}
+              aria-label={t.label}
+            >
+              <span className="theme-swatch__dot" style={{ background: t.swatch }} />
+              <span className="theme-swatch__label">{t.label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="section__head">
+          <div className="section__title">Schriftpaarung</div>
+          <div className="section__meta">{FONTS.find((f) => f.id === (data.fontMode || 'quiet'))?.label}</div>
+        </div>
+        <div className="font-picker">
+          {FONTS.map((f) => (
+            <button
+              key={f.id}
+              className={`font-card ${data.fontMode === f.id || (!data.fontMode && f.id === 'quiet') ? 'is-active' : ''}`}
+              onClick={() => actions.setFontMode(f.id)}
+            >
+              <div className="font-card__preview" style={{ fontFamily: f.serif }}>Aa</div>
+              <div className="font-card__name">{f.label}</div>
+              <div className="font-card__desc">{f.desc}</div>
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="section">

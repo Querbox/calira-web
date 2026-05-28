@@ -974,6 +974,101 @@
 }
 .tabbar__item.is-active::after { transform: translateX(-50%) scale(1); }
 
+/* ─── Theme picker ─────────────────────────────────────────── */
+.theme-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.theme-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px 12px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  transition: border-color 0.15s, background 0.15s;
+  min-height: 78px;
+}
+.theme-swatch:active { background: var(--bg-soft); }
+@media (hover: hover) {
+  .theme-swatch:hover { border-color: var(--ink-fainter); }
+}
+.theme-swatch.is-active {
+  border-color: var(--clay);
+  background: rgba(210, 136, 104, 0.04);
+}
+.theme-swatch__dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--bg);
+  transition: transform 0.15s;
+}
+.theme-swatch.is-active .theme-swatch__dot {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 1.5px var(--clay), inset 0 0 0 2px var(--bg);
+}
+.theme-swatch__label {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  letter-spacing: -0.005em;
+}
+.theme-swatch.is-active .theme-swatch__label { color: var(--clay); }
+
+/* ─── Font picker ──────────────────────────────────────────── */
+.font-picker {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.font-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 14px 12px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+  min-height: 96px;
+}
+.font-card:active { background: var(--bg-soft); }
+@media (hover: hover) {
+  .font-card:hover { border-color: var(--ink-fainter); }
+}
+.font-card.is-active {
+  border-color: var(--clay);
+  background: rgba(210, 136, 104, 0.04);
+}
+.font-card__preview {
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.font-card.is-active .font-card__preview { color: var(--clay); }
+.font-card__name {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.font-card__desc {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  letter-spacing: -0.005em;
+}
+
 /* ─── Wordmark — keeps the serif italic personality ────────── */
 .wordmark-block {
   text-align: center;

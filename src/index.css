@@ -10,6 +10,7 @@
   --line: #2a2520;
   --line-strong: #3a342d;
 
+  /* Accent (theme): clay is the default, can be overridden by [data-theme] */
   --clay: #d28868;
   --clay-soft: #b56c4c;
   --clay-ink: #1d100a;
@@ -85,3 +86,48 @@ a { color: inherit; }
 
 /* Icons — inherit color from parent, small + subtle */
 .icon { flex-shrink: 0; display: inline-block; vertical-align: middle; }
+
+/* ─── Theme variants (accent color) ────────────────────────── */
+:root[data-theme="sage"]    { --clay: #8aa890; --clay-soft: #6a8a70; --clay-ink: #0c1410; }
+:root[data-theme="plum"]    { --clay: #b87a9a; --clay-soft: #985e7c; --clay-ink: #1a0d15; }
+:root[data-theme="ocean"]   { --clay: #7aa3c2; --clay-soft: #5a83a2; --clay-ink: #0a1218; }
+:root[data-theme="amber"]   { --clay: #d4b76a; --clay-soft: #b09650; --clay-ink: #1a1408; }
+:root[data-theme="rose"]    { --clay: #d97a8a; --clay-soft: #b85c6c; --clay-ink: #1a0a10; }
+
+/* ─── Font modes ──────────────────────────────────────────── */
+:root[data-font="editorial"] {
+  --serif: 'Newsreader', 'Iowan Old Style', 'Palatino', Georgia, serif;
+  --sans: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+:root[data-font="modern"] {
+  --serif: 'DM Serif Text', 'Iowan Old Style', 'Palatino', Georgia, serif;
+  --sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+:root[data-font="mono"] {
+  --serif: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --sans: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+/* DM Serif Text doesn't have a 500 weight, normalize */
+:root[data-font="modern"] .page-header__title,
+:root[data-font="modern"] .sheet__title,
+:root[data-font="modern"] .figure__num,
+:root[data-font="modern"] .dial__num,
+:root[data-font="modern"] .stats__num {
+  font-weight: 400;
+  font-variation-settings: normal;
+}
+/* Mono mode: dial down italic-emphasis */
+:root[data-font="mono"] em {
+  font-style: normal;
+  font-weight: 700;
+  font-variation-settings: normal;
+}
+:root[data-font="mono"] .page-header__title,
+:root[data-font="mono"] .sheet__title,
+:root[data-font="mono"] .figure__num,
+:root[data-font="mono"] .dial__num,
+:root[data-font="mono"] .stats__num {
+  font-variation-settings: normal;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+}

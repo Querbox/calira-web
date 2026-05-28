@@ -1,6 +1,6 @@
 const KEY = 'calira:data:v1'
 
-const empty = () => ({ checkIns: [], medications: [], flares: [], notes: {}, name: '', theme: 'clay', fontMode: 'quiet', scheme: 'light' })
+const empty = () => ({ checkIns: [], medications: [], flares: [], notes: {}, name: '', theme: 'clay', fontMode: 'quiet', scheme: 'light', motion: 'auto' })
 
 export function loadData() {
   try {

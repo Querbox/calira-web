@@ -77,6 +77,11 @@ export const actions = {
     if (scheme === 'dark') document.documentElement.setAttribute('data-scheme', 'dark')
     else document.documentElement.removeAttribute('data-scheme')
   },
+  setMotion(motion) {
+    set((s) => ({ ...s, motion }))
+    if (motion === 'reduced') document.documentElement.setAttribute('data-motion', 'reduced')
+    else document.documentElement.removeAttribute('data-motion')
+  },
   seedDemo() {
     const now = Date.now()
     const day = 86400000

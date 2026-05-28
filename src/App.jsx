@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { useData } from './lib/store'
+import { useData, actions } from './lib/store'
 import Home from './screens/Home'
 import History from './screens/History'
 import Settings from './screens/Settings'
 import Icon from './components/Icon'
-import { useSwipe } from './lib/useSwipe'
+import { usePager } from './lib/usePager'
 
 const TABS = [
   { id: 'home', label: 'Heute', icon: 'sun' },
@@ -15,6 +15,7 @@ const TABS = [
 export default function App() {
   const data = useData()
   const [tab, setTab] = useState('home')
+  const [enterDir, setEnterDir] = useState(null) // 'left' | 'right' | null
   const pagesRef = useRef(null)
 
   useEffect(() => {
@@ -22,28 +23,54 @@ export default function App() {
     document.documentElement.setAttribute('data-font', data.fontMode || 'quiet')
     if (data.scheme === 'dark') document.documentElement.setAttribute('data-scheme', 'dark')
     else document.documentElement.removeAttribute('data-scheme')
-  }, [data.theme, data.fontMode, data.scheme])
+    if (data.motion === 'reduced') document.documentElement.setAttribute('data-motion', 'reduced')
+    else document.documentElement.removeAttribute('data-motion')
+  }, [data.theme, data.fontMode, data.scheme, data.motion])
 
-  function goto(next) {
-    if (next === tab) return
-    setTab(next)
+  // Respect OS-level prefers-reduced-motion when motion="auto" is set
+  useEffect(() => {
+    if (data.motion === 'auto') {
+      const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+      const apply = () => {
+        if (mq.matches) document.documentElement.setAttribute('data-motion', 'reduced')
+        else document.documentElement.removeAttribute('data-motion')
+      }
+      apply()
+      mq.addEventListener('change', apply)
+      return () => mq.removeEventListener('change', apply)
+    }
+  }, [data.motion])
+
+  function goto(nextId) {
+    if (nextId === tab) return
+    const cur = TABS.findIndex((t) => t.id === tab)
+    const nxt = TABS.findIndex((t) => t.id === nextId)
+    setEnterDir(nxt > cur ? 'from-right' : 'from-left')
+    // Reset transform on page wrapper before mount of new tab
+    if (pagesRef.current) {
+      pagesRef.current.style.transition = ''
+      pagesRef.current.style.transform = ''
+      pagesRef.current.style.opacity = ''
+    }
+    setTab(nextId)
   }
+
   function relative(delta) {
     const i = TABS.findIndex((t) => t.id === tab)
-    const n = TABS[(i + delta + TABS.length) % TABS.length]
+    const n = TABS[i + delta]
     if (n) goto(n.id)
   }
 
-  useSwipe(pagesRef, {
+  usePager(pagesRef, {
     onLeft: () => relative(1),
     onRight: () => relative(-1),
-    threshold: 70,
+    commitAt: 80,
   })
 
   return (
     <div className="app">
       <div className="app__pages" ref={pagesRef}>
-        <main className="app__main" key={tab}>
+        <main className={`app__main ${enterDir ? `app__main--${enterDir}` : ''}`} key={tab}>
           {tab === 'home' && <Home />}
           {tab === 'history' && <History />}
           {tab === 'settings' && <Settings />}

@@ -9,14 +9,61 @@
   touch-action: pan-y;
 }
 
-.app__pages { position: relative; flex: 1; }
+.app__pages {
+  position: relative;
+  flex: 1;
+  will-change: transform, opacity;
+}
 
 .app__main {
   padding: 28px 18px 24px;
   display: flex;
   flex-direction: column;
   gap: 18px;
+  animation: page-fade 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+.app__main--from-right { animation-name: page-from-right; }
+.app__main--from-left  { animation-name: page-from-left; }
+
+@keyframes page-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes page-from-right {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes page-from-left {
+  from { opacity: 0; transform: translateX(-28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Stagger cards on mount */
+.app__main > * {
+  animation: card-rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.app__main > *:nth-child(1) { animation-delay: 0.02s; }
+.app__main > *:nth-child(2) { animation-delay: 0.06s; }
+.app__main > *:nth-child(3) { animation-delay: 0.10s; }
+.app__main > *:nth-child(4) { animation-delay: 0.14s; }
+.app__main > *:nth-child(5) { animation-delay: 0.18s; }
+.app__main > *:nth-child(6) { animation-delay: 0.22s; }
+.app__main > *:nth-child(7) { animation-delay: 0.26s; }
+@keyframes card-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Reduced-motion override */
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+:root[data-motion="reduced"] .timeline__now-dot,
+:root[data-motion="reduced"] .timeline__now::before { animation: none !important; }
 
 /* ─── Page header ──────────────────────────────────────────── */
 .page-header {
@@ -205,11 +252,22 @@
   border-radius: var(--radius-lg);
   text-align: left;
   position: relative;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.2s;
   box-shadow: var(--shadow-card);
   min-height: 132px;
 }
-.slot-tile:active { transform: scale(0.97); }
+.slot-tile:active {
+  transform: scale(0.96) translateY(1px);
+  transition-duration: 0.08s;
+}
+.slot-tile__arrow {
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.slot-tile:active .slot-tile__arrow {
+  transform: translateX(3px);
+}
 @media (hover: hover) { .slot-tile:hover { box-shadow: var(--shadow-hover); } }
 .slot-tile__top {
   display: flex;
@@ -474,6 +532,11 @@
   font-variation-settings: 'opsz' 144, 'SOFT' 30;
   min-width: 36px;
   text-align: center;
+  transition: color 0.25s, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.flare-card__stepper button:active + .flare-card__intensity-num,
+.flare-card__stepper .flare-card__intensity-num:has(+ button:active) {
+  transform: scale(1.15);
 }
 .flare-card__tags {
   display: flex;
@@ -984,10 +1047,11 @@
   font-family: var(--sans);
   font-size: 13px;
   font-weight: 500;
-  transition: color 0.15s, background 0.15s;
+  transition: color 0.2s, background 0.2s, transform 0.12s;
   min-height: 38px;
   letter-spacing: -0.005em;
 }
+.chip:active { transform: scale(0.94); }
 .chip:active { background: var(--line); }
 @media (hover: hover) { .chip:hover { color: var(--ink); } }
 .chip.is-active {

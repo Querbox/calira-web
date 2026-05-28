@@ -79,6 +79,40 @@ export default function Settings() {
 
       <div className="card">
         <div className="section__head" style={{ padding: '0 0 10px' }}>
+          <div className="section__title">Bewegung</div>
+          <div className="section__meta">{
+            (data.motion || 'auto') === 'auto' ? 'System' :
+            (data.motion === 'reduced') ? 'reduziert' : 'voll'
+          }</div>
+        </div>
+        <div className="scheme-toggle" style={{ marginBottom: 8 }}>
+          <button
+            className={`scheme-toggle__btn ${(data.motion || 'auto') === 'auto' ? 'is-active' : ''}`}
+            onClick={() => actions.setMotion('auto')}
+          >
+            <Icon name="refresh" size={14} /> System
+          </button>
+          <button
+            className={`scheme-toggle__btn ${data.motion === 'full' ? 'is-active' : ''}`}
+            onClick={() => actions.setMotion('full')}
+          >
+            <Icon name="spark" size={14} /> Voll
+          </button>
+          <button
+            className={`scheme-toggle__btn ${data.motion === 'reduced' ? 'is-active' : ''}`}
+            onClick={() => actions.setMotion('reduced')}
+          >
+            <Icon name="check" size={14} /> Reduziert
+          </button>
+        </div>
+        <p className="muted" style={{ fontSize: 12 }}>
+          <em>System</em> folgt deiner OS-Einstellung „Bewegung reduzieren".
+          <em> Reduziert</em> schaltet alle Übergänge ab — nützlich bei Migräne oder Visualisierungsproblemen.
+        </p>
+      </div>
+
+      <div className="card">
+        <div className="section__head" style={{ padding: '0 0 10px' }}>
           <div className="section__title">Akzentfarbe</div>
           <div className="section__meta">{THEMES.find((t) => t.id === (data.theme || 'clay'))?.label}</div>
         </div>

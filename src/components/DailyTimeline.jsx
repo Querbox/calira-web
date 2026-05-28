@@ -5,7 +5,9 @@ const HOURS = 24
 
 export default function DailyTimeline({ checkIns, medications, flares, dateKey }) {
   const key = dateKey || todayKey()
-  const dayCheckIns = checkIns.filter((c) => dayKeyOf(c.timestamp) === key)
+  const dayCheckIns = checkIns
+    .filter((c) => dayKeyOf(c.timestamp) === key)
+    .sort((a, b) => a.timestamp - b.timestamp)
   const dayMeds = medications.filter((m) => dayKeyOf(m.timestamp) === key)
   const dayFlares = flares.filter((f) => dayKeyOf(f.startTime) === key)
 
@@ -13,80 +15,81 @@ export default function DailyTimeline({ checkIns, medications, flares, dateKey }
   const isToday = key === todayKey()
   const nowPct = isToday ? ((now.getHours() + now.getMinutes() / 60) / HOURS) * 100 : null
 
-  const hourTicks = [0, 6, 12, 18, 24]
-
   return (
     <div className="timeline">
-      <div className="timeline__axis">
-        {hourTicks.map((h) => (
-          <div key={h} className="timeline__tick" style={{ left: `${(h / HOURS) * 100}%` }}>
-            <span>{h.toString().padStart(2, '0')}</span>
+      <div className="timeline__hours">
+        {[0, 6, 12, 18, 24].map((h) => (
+          <div key={h} className="timeline__hour" style={{ left: `${(h / HOURS) * 100}%` }}>
+            {h.toString().padStart(2, '0')}
           </div>
         ))}
       </div>
 
-      <Lane label="Schmerz">
+      <div className="timeline__plot">
+        <div className="timeline__grid">
+          {[0, 1, 2, 3].map((i) => <div key={i} className="timeline__grid-line" />)}
+        </div>
+
         {dayFlares.map((f) => {
           const start = new Date(f.startTime)
-          const end = f.endTime ? new Date(f.endTime) : isToday ? now : new Date(start).setHours(23, 59)
-          const endDate = new Date(end)
-          const startPct = ((start.getHours() + start.getMinutes() / 60) / HOURS) * 100
-          const endPct = ((endDate.getHours() + endDate.getMinutes() / 60) / HOURS) * 100
+          const endTs = f.endTime || (isToday ? now.getTime() : start.setHours(23, 59, 0, 0))
+          const end = new Date(endTs)
+          const sPct = ((start.getHours() + start.getMinutes() / 60) / HOURS) * 100
+          const ePct = ((end.getHours() + end.getMinutes() / 60) / HOURS) * 100
           return (
             <div
               key={f.id}
               className="timeline__band"
               style={{
-                left: `${startPct}%`,
-                width: `${Math.max(2, endPct - startPct)}%`,
-                background: `linear-gradient(90deg, ${painColor(f.peakIntensity ?? 6)}55, ${painColor(f.peakIntensity ?? 6)}22)`,
-                borderColor: painColor(f.peakIntensity ?? 6),
+                left: `${sPct}%`,
+                width: `${Math.max(1.5, ePct - sPct)}%`,
+                color: painColor(f.peakIntensity ?? 6),
               }}
             />
           )
         })}
+
         {dayCheckIns.map((c) => {
           const dt = new Date(c.timestamp)
           const pct = ((dt.getHours() + dt.getMinutes() / 60) / HOURS) * 100
+          const bottomPct = (c.painLevel / 10) * 100
           return (
             <div
               key={c.id}
-              className="timeline__dot"
-              style={{ left: `${pct}%`, background: painColor(c.painLevel) }}
-              title={`${c.painLevel}/10 — ${dt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`}
+              style={{
+                position: 'absolute',
+                left: `${pct}%`,
+                bottom: `${bottomPct}%`,
+                color: painColor(c.painLevel),
+              }}
             >
-              <span>{c.painLevel}</span>
+              <div className="timeline__point" />
+              <div className="timeline__point-label">{c.painLevel}</div>
             </div>
           )
         })}
-      </Lane>
 
-      <Lane label="Medis">
         {dayMeds.map((m) => {
           const dt = new Date(m.timestamp)
           const pct = ((dt.getHours() + dt.getMinutes() / 60) / HOURS) * 100
           return (
-            <div key={m.id} className="timeline__pill" style={{ left: `${pct}%` }} title={m.medicationName}>
-              💊
-            </div>
+            <div
+              key={m.id}
+              className="timeline__med"
+              style={{ left: `${pct}%` }}
+              title={`${m.medicationName} · ${dt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`}
+            />
           )
         })}
-      </Lane>
 
-      {nowPct != null && (
-        <div className="timeline__now" style={{ left: `${nowPct}%` }}>
-          <div className="timeline__now-dot" />
-        </div>
-      )}
-    </div>
-  )
-}
+        {nowPct != null && <div className="timeline__now" style={{ left: `${nowPct}%` }} />}
+      </div>
 
-function Lane({ label, children }) {
-  return (
-    <div className="timeline__lane">
-      <div className="timeline__lane-label">{label}</div>
-      <div className="timeline__lane-track">{children}</div>
+      <div className="timeline__legend">
+        <span><span className="timeline__legend-dot" style={{ background: 'var(--pain-5)' }} />Schmerz</span>
+        <span><span className="timeline__legend-dot" style={{ background: 'var(--ink-soft)' }} />Medi</span>
+        {nowPct != null && <span><span className="timeline__legend-dot" style={{ background: 'var(--clay)' }} />Jetzt</span>}
+      </div>
     </div>
   )
 }

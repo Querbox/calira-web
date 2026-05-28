@@ -1,22 +1,22 @@
 export const PAIN_TYPES = [
-  { id: 'throbbing', label: 'Pulsierend' },
-  { id: 'pressing', label: 'Drückend' },
-  { id: 'sharp', label: 'Stechend' },
-  { id: 'dull', label: 'Dumpf' },
-  { id: 'unclear', label: 'Unklar' },
+  { id: 'throbbing', label: 'pulsierend' },
+  { id: 'pressing', label: 'drückend' },
+  { id: 'sharp', label: 'stechend' },
+  { id: 'dull', label: 'dumpf' },
+  { id: 'unclear', label: 'unklar' },
 ]
 
 export const FUNCTIONAL_LEVELS = [
-  { id: 'unaffected', label: 'Nicht eingeschränkt' },
-  { id: 'light', label: 'Leicht eingeschränkt' },
-  { id: 'moderate', label: 'Deutlich eingeschränkt' },
-  { id: 'severe', label: 'Stark eingeschränkt' },
+  { id: 'unaffected', label: 'nicht eingeschränkt' },
+  { id: 'light', label: 'leicht eingeschränkt' },
+  { id: 'moderate', label: 'deutlich eingeschränkt' },
+  { id: 'severe', label: 'stark eingeschränkt' },
 ]
 
 export const TIME_SLOTS = [
-  { id: 'morning', label: 'Morgens', hourRange: [5, 11] },
-  { id: 'midday', label: 'Mittags', hourRange: [11, 17] },
-  { id: 'evening', label: 'Abends', hourRange: [17, 24] },
+  { id: 'morning', label: 'Morgens' },
+  { id: 'midday', label: 'Mittags' },
+  { id: 'evening', label: 'Abends' },
 ]
 
 export function slotForHour(h) {
@@ -26,20 +26,24 @@ export function slotForHour(h) {
 }
 
 export function painColor(level) {
-  if (level == null) return 'var(--text-muted)'
-  if (level <= 2) return 'var(--pain-0)'
+  if (level == null) return 'var(--ink-fainter)'
+  if (level <= 2) return 'var(--pain-1)'
   if (level <= 4) return 'var(--pain-3)'
-  if (level <= 5) return 'var(--pain-5)'
-  if (level <= 7) return 'var(--pain-7)'
-  if (level <= 9) return 'var(--pain-9)'
+  if (level <= 6) return 'var(--pain-5)'
+  if (level <= 8) return 'var(--pain-7)'
   return 'var(--pain-10)'
 }
 
 export function painLabel(level) {
-  if (level == null) return '—'
-  if (level === 0) return 'Schmerzfrei'
-  if (level <= 3) return 'Leicht'
-  if (level <= 5) return 'Moderat'
-  if (level <= 7) return 'Stark'
-  return 'Sehr stark'
+  if (level == null) return ''
+  if (level === 0) return 'schmerzfrei'
+  if (level <= 2) return 'kaum spürbar'
+  if (level <= 4) return 'leicht'
+  if (level <= 6) return 'moderat'
+  if (level <= 8) return 'stark'
+  return 'sehr stark'
+}
+
+export function painTypeLabel(id) {
+  return PAIN_TYPES.find((t) => t.id === id)?.label || id
 }

@@ -1,34 +1,40 @@
 :root {
-  --bg: #1a0e10;
-  --bg-elevated: #241418;
-  --bg-card: #2a1a1f;
-  --bg-card-hover: #321f25;
-  --border: #3a242b;
-  --text: #f4e8eb;
-  --text-secondary: #c9b3b9;
-  --text-muted: #8a6f78;
-  --accent: #e8838d;
-  --accent-soft: #c95f6c;
-  --accent-glow: rgba(232, 131, 141, 0.25);
+  /* Warm ink palette — a quiet, paper-like dark */
+  --bg: #14110f;
+  --bg-soft: #1b1815;
+  --bg-elev: #201c18;
+  --ink: #ebe4d8;
+  --ink-soft: #a89e8e;
+  --ink-faint: #6b6256;
+  --ink-fainter: #3d362f;
+  --line: #2a2520;
+  --line-strong: #3a342d;
 
-  --pain-0: #4ec07a;
-  --pain-3: #9fc04e;
-  --pain-5: #e8c14e;
-  --pain-7: #e89a4e;
-  --pain-9: #e85a5a;
-  --pain-10: #c93838;
+  /* One restrained accent */
+  --clay: #c97c5d;
+  --clay-soft: #a8633d;
+  --clay-ink: #1d100a;
 
-  --success: #4ec07a;
-  --warning: #e89a4e;
-  --danger: #e85a5a;
+  /* Pain — a single tonal family (sage → mustard → amber → rust → oxblood) */
+  --pain-1: #7e8a6e;
+  --pain-3: #b39e63;
+  --pain-5: #c98856;
+  --pain-7: #b85b48;
+  --pain-10: #8c3a32;
 
-  --radius-sm: 10px;
-  --radius: 18px;
-  --radius-lg: 24px;
+  --success: #7e8a6e;
+  --warning: #c98856;
+  --danger: #b85b48;
 
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif;
+  --serif: 'Fraunces', 'Iowan Old Style', 'Palatino', Georgia, serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+
+  font-family: var(--serif);
+  font-variation-settings: 'opsz' 14, 'SOFT' 50;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'ss01', 'cv11';
   color-scheme: dark;
 }
 
@@ -41,18 +47,36 @@ html, body, #root {
 }
 
 body {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, #3a1a22 0%, transparent 60%) fixed,
-    var(--bg);
-  color: var(--text);
+  background: var(--bg);
+  color: var(--ink);
   font-size: 16px;
-  line-height: 1.45;
+  line-height: 1.5;
   overflow-x: hidden;
+  /* warm vignette + subtle grain */
+  background-image:
+    radial-gradient(ellipse 90% 70% at 50% -10%, rgba(201, 124, 93, 0.06) 0%, transparent 60%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.035 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-attachment: fixed, fixed;
 }
 
-button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-input, textarea, select { font-family: inherit; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; padding: 0; }
+input, textarea, select { font-family: inherit; color: inherit; }
 h1, h2, h3, h4, p { margin: 0; }
+ul { margin: 0; padding: 0; list-style: none; }
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::selection { background: var(--clay); color: var(--clay-ink); }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Numerals use mono with tabular figures */
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.italic { font-style: italic; font-variation-settings: 'opsz' 144, 'SOFT' 100; }

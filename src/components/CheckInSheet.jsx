@@ -25,51 +25,51 @@ export default function CheckInSheet({ defaultSlot, onClose }) {
     onClose()
   }
 
+  const stepCount = 4
+
   return (
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="sheet__header">
+        <div className="sheet__head">
           <div>
             <div className="sheet__eyebrow">{TIME_SLOTS.find((s) => s.id === initialSlot)?.label} · Check-in</div>
-            <h2 className="sheet__title">Wie geht's gerade?</h2>
+            <h2 className="sheet__title">Wie geht es <em>gerade?</em></h2>
           </div>
           <button className="sheet__close" onClick={onClose} aria-label="Schließen">×</button>
         </div>
 
         <div className="sheet__steps">
-          {['Schmerz', 'Typ', 'Funktion', 'Notiz'].map((s, i) => (
-            <div key={s} className={`sheet__step ${i === step ? 'is-active' : ''} ${i < step ? 'is-done' : ''}`} />
+          {Array.from({ length: stepCount }, (_, i) => (
+            <div key={i} className={`sheet__step ${i === step ? 'is-active' : ''} ${i < step ? 'is-done' : ''}`} />
           ))}
         </div>
 
         {step === 0 && (
           <div className="sheet__body">
-            <div className="pain-big" style={{ color: painColor(painLevel) }}>
-              <div className="pain-big__num">{painLevel}</div>
-              <div className="pain-big__label">{painLabel(painLevel)}</div>
+            <div className="dial">
+              <div className="dial__num" style={{ color: painColor(painLevel) }}>{painLevel}</div>
+              <div className="dial__caption">{painLabel(painLevel)}</div>
             </div>
             <input
               type="range"
-              min={0}
-              max={10}
+              min={0} max={10}
               value={painLevel}
               onChange={(e) => setPainLevel(Number(e.target.value))}
               className="slider"
-              style={{ '--track': painColor(painLevel) }}
+              style={{ '--fill': `${painLevel * 10}%` }}
             />
-            <div className="slider-scale"><span>0</span><span>5</span><span>10</span></div>
+            <div className="slider-scale">
+              <span>0 — keine</span><span>5</span><span>sehr stark — 10</span>
+            </div>
           </div>
         )}
 
         {step === 1 && (
           <div className="sheet__body">
-            <div className="chip-grid">
+            <div className="field-label">Charakter des Schmerzes</div>
+            <div className="chips">
               {PAIN_TYPES.map((t) => (
-                <button
-                  key={t.id}
-                  className={`chip ${type === t.id ? 'is-active' : ''}`}
-                  onClick={() => setType(t.id)}
-                >
+                <button key={t.id} className={`chip ${type === t.id ? 'is-active' : ''}`} onClick={() => setType(t.id)}>
                   {t.label}
                 </button>
               ))}
@@ -80,13 +80,9 @@ export default function CheckInSheet({ defaultSlot, onClose }) {
         {step === 2 && (
           <div className="sheet__body">
             <div className="field-label">Funktionale Einschränkung</div>
-            <div className="chip-grid">
+            <div className="chips">
               {FUNCTIONAL_LEVELS.map((f) => (
-                <button
-                  key={f.id}
-                  className={`chip ${functional === f.id ? 'is-active' : ''}`}
-                  onClick={() => setFunctional(f.id)}
-                >
+                <button key={f.id} className={`chip ${functional === f.id ? 'is-active' : ''}`} onClick={() => setFunctional(f.id)}>
                   {f.label}
                 </button>
               ))}
@@ -101,7 +97,7 @@ export default function CheckInSheet({ defaultSlot, onClose }) {
             <div className="field-label">Notiz (optional)</div>
             <textarea
               className="textarea"
-              rows={4}
+              rows={5}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Auslöser, Wetter, besondere Umstände…"
@@ -111,12 +107,12 @@ export default function CheckInSheet({ defaultSlot, onClose }) {
 
         <div className="sheet__actions">
           {step > 0 ? (
-            <button className="btn btn-ghost" onClick={() => setStep(step - 1)}>Zurück</button>
+            <button className="btn btn-ghost" onClick={() => setStep(step - 1)}>← zurück</button>
           ) : <span />}
-          {step < 3 ? (
-            <button className="btn btn-primary" onClick={() => setStep(step + 1)}>Weiter</button>
+          {step < stepCount - 1 ? (
+            <button className="btn btn-primary" onClick={() => setStep(step + 1)}>weiter →</button>
           ) : (
-            <button className="btn btn-primary" onClick={submit}>Speichern</button>
+            <button className="btn btn-primary" onClick={submit}>eintragen ✓</button>
           )}
         </div>
       </div>
@@ -128,16 +124,15 @@ function SliderField({ label, value, onChange }) {
   return (
     <div className="slider-field">
       <div className="slider-field__head">
-        <span>{label}</span>
-        <strong>{value}</strong>
+        <span className="slider-field__label">{label}</span>
+        <span className="slider-field__value">{value} / 10</span>
       </div>
       <input
-        type="range"
-        min={0}
-        max={10}
+        type="range" min={0} max={10}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="slider slider--sm"
+        className="slider"
+        style={{ '--fill': `${value * 10}%` }}
       />
     </div>
   )

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { dayKeyOf, todayKey } from '../lib/storage'
 import { useData } from '../lib/store'
-import { painColor, painLabel } from '../lib/pain'
+import { painColor, painLabel, painTypeLabel } from '../lib/pain'
 import DailyTimeline from '../components/DailyTimeline'
 
 export default function History() {
@@ -17,22 +17,11 @@ export default function History() {
       d.setHours(0, 0, 0, 0)
       map.set(dayKeyOf(d.getTime()), { date: d, checkIns: [], meds: [], flares: [] })
     }
-    data.checkIns.forEach((c) => {
-      const k = dayKeyOf(c.timestamp)
-      if (map.has(k)) map.get(k).checkIns.push(c)
-    })
-    data.medications.forEach((m) => {
-      const k = dayKeyOf(m.timestamp)
-      if (map.has(k)) map.get(k).meds.push(m)
-    })
-    data.flares.forEach((f) => {
-      const k = dayKeyOf(f.startTime)
-      if (map.has(k)) map.get(k).flares.push(f)
-    })
+    data.checkIns.forEach((c) => { const k = dayKeyOf(c.timestamp); if (map.has(k)) map.get(k).checkIns.push(c) })
+    data.medications.forEach((m) => { const k = dayKeyOf(m.timestamp); if (map.has(k)) map.get(k).meds.push(m) })
+    data.flares.forEach((f) => { const k = dayKeyOf(f.startTime); if (map.has(k)) map.get(k).flares.push(f) })
     return Array.from(map.entries()).map(([key, v]) => {
-      const avg = v.checkIns.length
-        ? v.checkIns.reduce((s, c) => s + c.painLevel, 0) / v.checkIns.length
-        : null
+      const avg = v.checkIns.length ? v.checkIns.reduce((s, c) => s + c.painLevel, 0) / v.checkIns.length : null
       const max = v.checkIns.length ? Math.max(...v.checkIns.map((c) => c.painLevel)) : null
       return { key, ...v, avg, max }
     })
@@ -50,26 +39,29 @@ export default function History() {
     <>
       <header className="page-header">
         <div className="page-header__eyebrow">Verlauf</div>
-        <h1 className="page-header__title">Letzte 30 Tage</h1>
+        <h1 className="page-header__title">Die letzten <em>dreißig</em> Tage</h1>
       </header>
 
-      <section className="stats-grid">
-        <Stat label="Tracked" value={summary.tracked} />
-        <Stat label="Gute Tage" value={summary.good} color="var(--success)" />
-        <Stat label="Schwere Tage" value={summary.severe} color="var(--danger)" />
-        <Stat label="Mit Medis" value={summary.medDays} />
-      </section>
+      <div className="stats">
+        <div className="stats__cell"><div className="stats__num">{summary.tracked}</div><div className="stats__label">Tracked</div></div>
+        <div className="stats__cell"><div className="stats__num">{summary.good}</div><div className="stats__label">Gute Tage</div></div>
+        <div className="stats__cell"><div className="stats__num" style={{ color: summary.severe > 0 ? 'var(--pain-7)' : undefined }}>{summary.severe}</div><div className="stats__label">Schwere Tage</div></div>
+        <div className="stats__cell"><div className="stats__num">{summary.medDays}</div><div className="stats__label">Mit Medis</div></div>
+      </div>
 
-      <section className="card">
-        <div className="card__header"><h2>Schmerz-Landschaft</h2></div>
+      <section className="section">
+        <div className="section__head">
+          <div className="section__title">Schmerz-Landschaft</div>
+          <div className="section__meta">Max pro Tag</div>
+        </div>
         <div className="landscape">
           {days.map((d) => {
-            const h = d.max != null ? (d.max / 10) * 100 : 6
+            const h = d.max != null ? (d.max / 10) * 100 : 4
             return (
               <button
                 key={d.key}
                 className={`landscape__bar ${d.key === todayKey() ? 'is-today' : ''}`}
-                style={{ height: `${h}%`, background: d.max != null ? painColor(d.max) : 'var(--border)' }}
+                style={{ height: `${h}%`, background: d.max != null ? painColor(d.max) : undefined }}
                 onClick={() => setOpenDay(d)}
                 title={`${d.date.toLocaleDateString('de-DE')} · Max ${d.max ?? '—'}`}
               />
@@ -82,29 +74,36 @@ export default function History() {
         </div>
       </section>
 
-      <section className="card">
-        <div className="card__header"><h2>Tagesliste</h2></div>
-        <ul className="list">
+      <section className="section">
+        <div className="section__head">
+          <div className="section__title">Tagesliste</div>
+        </div>
+        <ul className="entries">
           {[...days].reverse().filter((d) => d.checkIns.length || d.meds.length || d.flares.length).map((d) => (
-            <li key={d.key} className="list__row list__row--button" onClick={() => setOpenDay(d)}>
-              <div>
-                <div className="list__title">
-                  {d.date.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })}
+            <li key={d.key}>
+              <button className="entry entry--button" onClick={() => setOpenDay(d)}>
+                <span className="entry__time">
+                  {d.date.toLocaleDateString('de-DE', { weekday: 'short' }).replace('.', '')}
+                  <br />
+                  {d.date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}
+                </span>
+                <div>
+                  <div className="entry__title">
+                    {d.avg != null ? <>Ø <em>{d.avg.toFixed(1)}</em></> : 'nur Medikamente'}
+                  </div>
+                  <div className="entry__meta">
+                    {d.checkIns.length} Check-ins · {d.meds.length} Medis
+                    {d.flares.length ? ` · ${d.flares.length} Schub` : ''}
+                  </div>
                 </div>
-                <div className="list__meta">
-                  {d.checkIns.length} Check-ins · {d.meds.length} Medis
-                  {d.flares.length ? ` · ${d.flares.length} Schub` : ''}
-                </div>
-              </div>
-              {d.max != null && (
-                <div className="list__pill" style={{ background: painColor(d.max) }}>
-                  {d.max}
-                </div>
-              )}
+                <span className="entry__num" style={d.max != null ? { color: painColor(d.max) } : undefined}>
+                  {d.max ?? '—'}
+                </span>
+              </button>
             </li>
           ))}
           {days.every((d) => !d.checkIns.length && !d.meds.length && !d.flares.length) && (
-            <li className="list__row"><div className="list__meta">Noch keine Einträge.</div></li>
+            <li className="entry"><span /><span className="entry__meta">Noch keine Einträge.</span><span /></li>
           )}
         </ul>
       </section>
@@ -118,42 +117,62 @@ function DayDetail({ day, data, onClose }) {
   return (
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="sheet__header">
+        <div className="sheet__head">
           <div>
-            <div className="sheet__eyebrow">Tag</div>
+            <div className="sheet__eyebrow">
+              {day.date.toLocaleDateString('de-DE', { weekday: 'long' })}
+            </div>
             <h2 className="sheet__title">
-              {day.date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {day.date.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })}
             </h2>
           </div>
           <button className="sheet__close" onClick={onClose} aria-label="Schließen">×</button>
         </div>
         <div className="sheet__body">
-          <div className="hero-stats">
-            <Stat label="Ø Schmerz" value={day.avg != null ? day.avg.toFixed(1) : '—'} />
-            <Stat label="Max" value={day.max ?? '—'} color={day.max != null ? painColor(day.max) : undefined} />
-            <Stat label="Medis" value={day.meds.length} />
+          <div className="kv-row" style={{ borderTop: 'none', paddingTop: 0 }}>
+            <div className="kv"><div className="kv__label">Schmerz Ø</div><div className="kv__value">{day.avg != null ? day.avg.toFixed(1) : '—'}</div></div>
+            <div className="kv"><div className="kv__label">Max</div><div className="kv__value" style={day.max != null ? { color: painColor(day.max) } : undefined}>{day.max ?? '—'}</div></div>
+            <div className="kv"><div className="kv__label">Medis</div><div className="kv__value">{day.meds.length}</div></div>
           </div>
-          <DailyTimeline
-            checkIns={data.checkIns}
-            medications={data.medications}
-            flares={data.flares}
-            dateKey={day.key}
-          />
+
+          <DailyTimeline checkIns={data.checkIns} medications={data.medications} flares={data.flares} dateKey={day.key} />
+
           {day.checkIns.length > 0 && (
             <>
               <div className="field-label">Check-ins</div>
-              <ul className="list">
+              <ul className="entries">
                 {day.checkIns.map((c) => (
-                  <li key={c.id} className="list__row">
-                    <div>
-                      <div className="list__title" style={{ color: painColor(c.painLevel) }}>
-                        {c.painLevel}/10 · {painLabel(c.painLevel)}
-                      </div>
-                      <div className="list__meta">{c.dominantType} · Stress {c.stressLevel} · Nacken {c.neckTension}</div>
-                    </div>
-                    <div className="list__time">
+                  <li key={c.id} className="entry">
+                    <span className="entry__time">
                       {new Date(c.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <div>
+                      <div className="entry__title" style={{ color: painColor(c.painLevel) }}>
+                        {painLabel(c.painLevel)}, {painTypeLabel(c.dominantType)}
+                      </div>
+                      <div className="entry__meta">Stress {c.stressLevel}/10 · Nacken {c.neckTension}/10</div>
                     </div>
+                    <span className="entry__num" style={{ color: painColor(c.painLevel) }}>{c.painLevel}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {day.meds.length > 0 && (
+            <>
+              <div className="field-label">Medikamente</div>
+              <ul className="entries">
+                {day.meds.map((m) => (
+                  <li key={m.id} className="entry">
+                    <span className="entry__time">
+                      {new Date(m.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <div>
+                      <div className="entry__title">{m.medicationName}</div>
+                      <div className="entry__meta">{m.dosage} · Wirkung: {m.perceivedEffect}</div>
+                    </div>
+                    <span />
                   </li>
                 ))}
               </ul>
@@ -161,15 +180,6 @@ function DayDetail({ day, data, onClose }) {
           )}
         </div>
       </div>
-    </div>
-  )
-}
-
-function Stat({ label, value, color }) {
-  return (
-    <div className="stat">
-      <div className="stat__value" style={color ? { color } : undefined}>{value}</div>
-      <div className="stat__label">{label}</div>
     </div>
   )
 }

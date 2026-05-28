@@ -4,9 +4,9 @@ import History from './screens/History'
 import Settings from './screens/Settings'
 
 const TABS = [
-  { id: 'home', label: 'Heute', icon: '☀️' },
-  { id: 'history', label: 'Verlauf', icon: '📊' },
-  { id: 'settings', label: 'Mehr', icon: '⚙️' },
+  { id: 'home', label: 'Heute' },
+  { id: 'history', label: 'Verlauf' },
+  { id: 'settings', label: 'Mehr' },
 ]
 
 export default function App() {
@@ -21,14 +21,14 @@ export default function App() {
       </main>
 
       <nav className="tabbar">
+        <span className="wordmark">Calira</span>
         {TABS.map((t) => (
           <button
             key={t.id}
             className={`tabbar__item ${tab === t.id ? 'is-active' : ''}`}
             onClick={() => setTab(t.id)}
           >
-            <span className="tabbar__icon">{t.icon}</span>
-            <span className="tabbar__label">{t.label}</span>
+            {t.label}
           </button>
         ))}
       </nav>

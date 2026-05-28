@@ -9,7 +9,7 @@ export default function Settings() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `calira-export-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = `calira-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -18,36 +18,46 @@ export default function Settings() {
     <>
       <header className="page-header">
         <div className="page-header__eyebrow">Einstellungen</div>
-        <h1 className="page-header__title">Daten & App</h1>
+        <h1 className="page-header__title">Daten & <em>Stille.</em></h1>
       </header>
 
-      <section className="card">
-        <div className="card__header"><h2>Deine Daten</h2></div>
+      <section className="section">
+        <div className="section__head"><div className="section__title">Deine Daten</div></div>
         <p className="muted">
-          Alle Einträge bleiben lokal in deinem Browser (LocalStorage). Nichts wird hochgeladen.
-          Gesamt: {total} Einträge.
+          Alle Einträge bleiben <em>lokal</em> in deinem Browser. Nichts wird hochgeladen, niemand kann mitlesen.
         </p>
-        <div className="action-row" style={{ marginTop: 16 }}>
-          <button className="btn btn-soft" onClick={exportData}>Export (JSON)</button>
-          <button className="btn btn-soft" onClick={actions.seedDemo}>Demo-Daten laden</button>
-        </div>
-        <div className="action-row" style={{ marginTop: 8 }}>
-          <button
-            className="btn btn-danger"
-            onClick={() => {
-              if (confirm('Wirklich alle Daten löschen?')) actions.reset()
-            }}
-          >
-            Alle Daten löschen
-          </button>
+        <div className="kv-row">
+          <div className="kv"><div className="kv__label">Einträge</div><div className="kv__value">{total}</div></div>
+          <div className="kv"><div className="kv__label">Check-ins</div><div className="kv__value">{data.checkIns.length}</div></div>
+          <div className="kv"><div className="kv__label">Medis</div><div className="kv__value">{data.medications.length}</div></div>
         </div>
       </section>
 
-      <section className="card">
-        <div className="card__header"><h2>Über Calira</h2></div>
+      <div className="actions">
+        <button className="actions__btn" onClick={exportData}>Daten exportieren</button>
+        <button className="actions__btn" onClick={actions.seedDemo}>Demo-Daten laden</button>
+        <button
+          className="actions__btn actions__btn--alert"
+          onClick={() => { if (confirm('Wirklich alle Daten löschen?')) actions.reset() }}
+        >
+          Alles löschen
+        </button>
+      </div>
+
+      <section className="section">
+        <div className="section__head"><div className="section__title">Über Calira</div></div>
         <p className="muted">
-          MVP-Web-Version. Tracking für chronische Kopfschmerzen — drei Check-ins pro Tag,
-          Medikamente, Schübe und ein Tagesverlauf.
+          Ein leises Tagebuch für chronische Kopfschmerzen. Drei Momente am Tag, die du
+          dir selbst widmest — Morgens, Mittags, Abends. Keine Pop-ups, keine Streaks, keine
+          Punkte. <em>Nur du und der Tag.</em>
+        </p>
+      </section>
+
+      <section className="section">
+        <div className="section__head"><div className="section__title">Colophon</div></div>
+        <p className="muted">
+          Typografie: Fraunces & JetBrains Mono. Aufzeichnung: LocalStorage. Code auf
+          <a href="https://github.com/Querbox/calira-web" style={{ color: 'var(--clay)' }} target="_blank" rel="noreferrer"> GitHub</a>.
         </p>
       </section>
     </>

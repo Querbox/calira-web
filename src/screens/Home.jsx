@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { TIME_SLOTS, painColor, painLabel } from '../lib/pain'
+import { TIME_SLOTS, painColor, painLabel, painTypeLabel } from '../lib/pain'
 import { todayKey, dayKeyOf } from '../lib/storage'
 import { useData, actions } from '../lib/store'
-import PainRing from '../components/PainRing'
 import DailyTimeline from '../components/DailyTimeline'
 import CheckInSheet from '../components/CheckInSheet'
 import MedicationSheet from '../components/MedicationSheet'
@@ -13,20 +12,19 @@ export default function Home() {
   const [defaultSlot, setDefaultSlot] = useState(null)
 
   const key = todayKey()
-  const todayCheckIns = data.checkIns.filter((c) => dayKeyOf(c.timestamp) === key)
-  const todayMeds = data.medications.filter((m) => dayKeyOf(m.timestamp) === key)
+  const today = data.checkIns.filter((c) => dayKeyOf(c.timestamp) === key)
+  const meds = data.medications.filter((m) => dayKeyOf(m.timestamp) === key)
   const activeFlare = data.flares.find((f) => !f.endTime)
 
-  const baseline =
-    todayCheckIns.length > 0
-      ? Math.round((todayCheckIns.reduce((s, c) => s + c.painLevel, 0) / todayCheckIns.length) * 10) / 10
+  const avg =
+    today.length > 0
+      ? Math.round((today.reduce((s, c) => s + c.painLevel, 0) / today.length) * 10) / 10
       : null
+  const max = today.length ? Math.max(...today.map((c) => c.painLevel)) : null
 
-  const dateLabel = new Date().toLocaleDateString('de-DE', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  })
+  const now = new Date()
+  const dateLabel = now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })
+  const greeting = getGreeting(now.getHours())
 
   function openCheckIn(slot) {
     setDefaultSlot(slot)
@@ -36,72 +34,91 @@ export default function Home() {
   return (
     <>
       <header className="page-header">
-        <div className="page-header__eyebrow">Heute</div>
-        <h1 className="page-header__title">{dateLabel}</h1>
+        <div className="page-header__eyebrow">{dateLabel}</div>
+        <h1 className="page-header__title">
+          {greeting}, <em>heute.</em>
+        </h1>
       </header>
 
       {activeFlare && (
-        <div className="flare-banner">
+        <div className="flare">
           <div>
-            <div className="flare-banner__label">Aktiver Schub</div>
-            <div className="flare-banner__time">
-              Seit {new Date(activeFlare.startTime).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+            <div className="flare__label">Ein Schub läuft.</div>
+            <div className="flare__time">
+              seit {new Date(activeFlare.startTime).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>
           <button
             className="btn btn-ghost"
             onClick={() => {
-              const peak = Math.max(...todayCheckIns.map((c) => c.painLevel), activeFlare.peakIntensity || 5)
+              const peak = Math.max(...today.map((c) => c.painLevel), activeFlare.peakIntensity || 5)
               actions.endFlare(activeFlare.id, peak)
             }}
           >
-            Beenden
+            beenden
           </button>
         </div>
       )}
 
-      <section className="card card--hero">
-        <div className="card__header">
-          <h2>Tages-Baseline</h2>
-          <span className="card__meta">{todayCheckIns.length}/3 Check-ins</span>
+      <section className="section">
+        <div className="section__head">
+          <div className="section__title">Tages-Baseline</div>
+          <div className="section__meta">{today.length} / 3 Check-ins</div>
         </div>
-        <div className="hero-row">
-          <PainRing level={baseline != null ? Math.round(baseline) : null} size={120} stroke={10} />
-          <div className="hero-stats">
-            <Stat label="Ø Schmerz" value={baseline ?? '—'} />
-            <Stat label="Max heute" value={todayCheckIns.length ? Math.max(...todayCheckIns.map((c) => c.painLevel)) : '—'} />
-            <Stat label="Medis" value={todayMeds.length} />
+        <div className="figure">
+          <div
+            className={`figure__num ${avg == null ? 'figure__num--empty' : ''}`}
+            style={avg != null ? { color: painColor(Math.round(avg)) } : undefined}
+          >
+            {avg != null ? avg.toFixed(1) : '—'}
+          </div>
+          <div className="figure__caption">
+            <div className="figure__caption-label">Schmerz Ø</div>
+            <div className="figure__caption-value">
+              {avg != null ? painLabel(Math.round(avg)) : 'noch kein Eintrag'}
+            </div>
           </div>
         </div>
+        <div className="kv-row">
+          <div className="kv"><div className="kv__label">Max heute</div><div className="kv__value">{max ?? '—'}</div></div>
+          <div className="kv"><div className="kv__label">Medikamente</div><div className="kv__value">{meds.length}</div></div>
+          <div className="kv"><div className="kv__label">Schübe</div><div className="kv__value">{data.flares.filter((f) => dayKeyOf(f.startTime) === key).length}</div></div>
+        </div>
       </section>
 
-      <section className="slot-grid">
-        {TIME_SLOTS.map((slot) => {
-          const entry = todayCheckIns.find((c) => c.timeSlot === slot.id)
-          return (
-            <button key={slot.id} className={`slot-card ${entry ? 'is-done' : ''}`} onClick={() => openCheckIn(slot.id)}>
-              <div className="slot-card__label">{slot.label}</div>
-              {entry ? (
-                <>
-                  <div className="slot-card__value" style={{ color: painColor(entry.painLevel) }}>
-                    {entry.painLevel}
-                  </div>
-                  <div className="slot-card__meta">{painLabel(entry.painLevel)}</div>
-                </>
-              ) : (
-                <>
-                  <div className="slot-card__value slot-card__value--empty">+</div>
-                  <div className="slot-card__meta">Check-in</div>
-                </>
-              )}
-            </button>
-          )
-        })}
+      <section className="section">
+        <div className="section__head">
+          <div className="section__title">Drei Momente</div>
+        </div>
+        <div className="slots">
+          {TIME_SLOTS.map((slot) => {
+            const entry = today.find((c) => c.timeSlot === slot.id)
+            return (
+              <button key={slot.id} className="slot" onClick={() => openCheckIn(slot.id)}>
+                <span className="slot__label">{slot.label}</span>
+                {entry ? (
+                  <span className="slot__detail">
+                    {painLabel(entry.painLevel)}, {painTypeLabel(entry.dominantType)}
+                  </span>
+                ) : (
+                  <span className="slot__detail slot__detail--empty">noch offen</span>
+                )}
+                {entry ? (
+                  <span className="slot__value" style={{ color: painColor(entry.painLevel) }}>
+                    <span className="slot__tick" />{entry.painLevel}
+                  </span>
+                ) : (
+                  <span className="slot__value slot__value--empty">eintragen →</span>
+                )}
+              </button>
+            )
+          })}
+        </div>
       </section>
 
-      <section className="card">
-        <div className="card__header">
-          <h2>Tagesverlauf</h2>
+      <section className="section">
+        <div className="section__head">
+          <div className="section__title">Verlauf des Tages</div>
         </div>
         <DailyTimeline
           checkIns={data.checkIns}
@@ -111,35 +128,32 @@ export default function Home() {
         />
       </section>
 
-      <section className="action-row">
-        <button className="btn btn-soft" onClick={() => setSheet('med')}>
-          💊 Medikament
-        </button>
-        {!activeFlare ? (
+      <div className="actions">
+        <button className="actions__btn" onClick={() => setSheet('med')}>Medikament eintragen</button>
+        {!activeFlare && (
           <button
-            className="btn btn-danger"
+            className="actions__btn actions__btn--alert"
             onClick={() => actions.addFlare({ peakIntensity: 5, quality: 'akut' })}
           >
-            ⚡ Schub starten
+            Schub starten
           </button>
-        ) : (
-          <span />
         )}
-      </section>
+      </div>
 
-      {todayMeds.length > 0 && (
-        <section className="card">
-          <div className="card__header"><h2>Medikamente heute</h2></div>
-          <ul className="list">
-            {todayMeds.map((m) => (
-              <li key={m.id} className="list__row">
-                <div>
-                  <div className="list__title">{m.medicationName}</div>
-                  <div className="list__meta">{m.dosage} · {m.perceivedEffect}</div>
-                </div>
-                <div className="list__time">
+      {meds.length > 0 && (
+        <section className="section">
+          <div className="section__head"><div className="section__title">Medikamente heute</div></div>
+          <ul className="entries">
+            {meds.map((m) => (
+              <li key={m.id} className="entry">
+                <span className="entry__time">
                   {new Date(m.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+                <div>
+                  <div className="entry__title">{m.medicationName}</div>
+                  <div className="entry__meta">{m.dosage} · Wirkung: {m.perceivedEffect}</div>
                 </div>
+                <span />
               </li>
             ))}
           </ul>
@@ -152,11 +166,11 @@ export default function Home() {
   )
 }
 
-function Stat({ label, value }) {
-  return (
-    <div className="stat">
-      <div className="stat__value">{value}</div>
-      <div className="stat__label">{label}</div>
-    </div>
-  )
+function getGreeting(h) {
+  if (h < 5) return 'Eine ruhige Nacht'
+  if (h < 11) return 'Guten Morgen'
+  if (h < 14) return 'Hallo'
+  if (h < 18) return 'Guten Tag'
+  if (h < 22) return 'Guten Abend'
+  return 'Späte Stunde'
 }

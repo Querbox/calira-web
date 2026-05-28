@@ -59,7 +59,7 @@ export const actions = {
     const day = 86400000
     const checkIns = []
     const meds = []
-    for (let d = 6; d >= 0; d--) {
+    for (let d = 13; d >= 0; d--) {
       const base = now - d * day
       ;[
         [8, 'morning'],

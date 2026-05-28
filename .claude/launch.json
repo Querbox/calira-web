@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "calira-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "5174"],
+      "cwd": "/Users/Fabian/Documents/GitHub/calira-web",
+      "port": 5174
+    }
+  ]
+}

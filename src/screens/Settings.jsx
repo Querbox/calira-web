@@ -1,5 +1,7 @@
+import { useRef, useState } from 'react'
 import { useData, actions } from '../lib/store'
 import Icon from '../components/Icon'
+import PrintReport from '../components/PrintReport'
 
 const THEMES = [
   { id: 'clay',  label: 'Clay',  swatch: '#ec7a5a' },
@@ -21,6 +23,27 @@ export default function Settings() {
   const data = useData()
   const total = data.checkIns.length + data.medications.length + data.flares.length
   const scheme = data.scheme || 'light'
+  const fileInput = useRef(null)
+  const [printing, setPrinting] = useState(false)
+
+  async function onImportFile(e) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-importing the same file
+    if (!file) return
+    try {
+      const text = await file.text()
+      const parsed = JSON.parse(text)
+      const summary = `${parsed.checkIns?.length || 0} Check-ins · ${parsed.medications?.length || 0} Medis · ${parsed.flares?.length || 0} Schübe`
+      const ok = confirm(
+        `Import: ${summary}\n\nDeine aktuellen Einträge (${total}) werden überschrieben. Fortfahren?`
+      )
+      if (!ok) return
+      const out = actions.importData(parsed, { merge: false })
+      alert(`Importiert: ${out.checkIns} Check-ins, ${out.medications} Medis, ${out.flares} Schübe.`)
+    } catch (err) {
+      alert(`Import fehlgeschlagen: ${err.message || err}`)
+    }
+  }
 
   function exportData() {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -185,10 +208,24 @@ export default function Settings() {
           <button className="btn btn-soft" onClick={exportData}>
             <Icon name="download" size={15} /> Exportieren
           </button>
-          <button className="btn btn-soft" onClick={actions.seedDemo}>
-            <Icon name="refresh" size={15} /> Demo-Daten
+          <button className="btn btn-soft" onClick={() => fileInput.current?.click()}>
+            <Icon name="refresh" size={15} /> Importieren
           </button>
         </div>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="application/json,.json"
+          style={{ display: 'none' }}
+          onChange={onImportFile}
+        />
+        <button
+          className="btn btn-soft btn-block"
+          style={{ marginTop: 8 }}
+          onClick={actions.seedDemo}
+        >
+          <Icon name="spark" size={15} /> Demo-Daten laden
+        </button>
         <button
           className="btn btn-danger btn-block"
           style={{ marginTop: 8 }}
@@ -197,6 +234,26 @@ export default function Settings() {
           <Icon name="trash" size={15} /> Alle Daten löschen
         </button>
       </div>
+
+      <div className="card">
+        <div className="section__head" style={{ padding: '0 0 10px' }}>
+          <div className="section__title">Bericht für Ärzt*in</div>
+        </div>
+        <p className="muted" style={{ fontSize: 13 }}>
+          Eine druckbare 1-Seiten-Übersicht der letzten <em>28 Tage</em> —
+          Tagestabelle, Medikamenten-Übersicht und häufigste Auslöser.
+          Im Druckdialog kannst du auch <em>"Als PDF sichern"</em> wählen.
+        </p>
+        <button
+          className="btn btn-soft btn-block"
+          style={{ marginTop: 12 }}
+          onClick={() => setPrinting(true)}
+        >
+          <Icon name="download" size={15} /> Bericht drucken / als PDF
+        </button>
+      </div>
+
+      {printing && <PrintReport data={data} onClose={() => setPrinting(false)} />}
 
       <div className="card">
         <div className="section__head" style={{ padding: '0 0 10px' }}>

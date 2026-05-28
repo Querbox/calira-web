@@ -1,0 +1,127 @@
+/* Hidden on screen; visible only when printing */
+.print-report { display: none; }
+
+@media print {
+  @page { size: A4; margin: 14mm 14mm; }
+
+  /* Hide the whole app, show only the report */
+  html, body, #root, .app, .tabbar { background: #fff !important; }
+  .app__main, .tabbar, .sheet-backdrop, .name-prompt { display: none !important; }
+  html, body { color: #1d1814 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  .print-report {
+    display: block !important;
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    color: #1d1814;
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.45;
+    padding: 4mm;
+    z-index: 9999;
+  }
+
+  .print-report__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 8mm;
+    border-bottom: 1px solid #1d1814;
+    margin-bottom: 6mm;
+  }
+  .print-report__brand {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: 11pt;
+    font-weight: 500;
+    color: #6b6256;
+    margin-bottom: 2mm;
+  }
+  .print-report__title {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 22pt;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    margin: 0 0 2mm;
+  }
+  .print-report__sub {
+    font-size: 9.5pt;
+    color: #6b6256;
+  }
+
+  .print-report__stats {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4mm;
+    margin-bottom: 6mm;
+  }
+  .print-stat {
+    border-left: 1px solid #c4baa8;
+    padding-left: 3mm;
+  }
+  .print-stat__num {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 18pt;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .print-stat__label {
+    font-size: 8.5pt;
+    color: #6b6256;
+    margin-top: 1mm;
+  }
+
+  .print-section { margin-bottom: 6mm; break-inside: avoid; }
+  .print-section__title {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 13pt;
+    font-weight: 500;
+    margin: 0 0 3mm;
+    padding-bottom: 1mm;
+    border-bottom: 1px solid #c4baa8;
+  }
+  .print-section__note {
+    font-size: 9.5pt;
+    color: #4a443d;
+    margin-top: 2mm;
+  }
+  .print-section__note em { font-style: italic; color: #c25433; }
+
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+  }
+  .print-table th, .print-table td {
+    text-align: left;
+    padding: 1.4mm 2mm;
+    border-bottom: 0.5pt solid #ebe2cc;
+    vertical-align: top;
+  }
+  .print-table th {
+    color: #6b6256;
+    font-weight: 600;
+    font-size: 8.5pt;
+    border-bottom: 0.8pt solid #1d1814;
+  }
+  .print-table td:nth-child(2),
+  .print-table td:nth-child(3),
+  .print-table td:nth-child(4),
+  .print-table td:nth-child(6) { font-variant-numeric: tabular-nums; }
+
+  .print-list { margin: 0; padding-left: 5mm; }
+  .print-list li { margin-bottom: 1mm; }
+
+  .print-report__foot {
+    position: fixed;
+    bottom: 8mm; left: 14mm; right: 14mm;
+    font-size: 8pt;
+    color: #8b8275;
+    border-top: 0.5pt solid #ebe2cc;
+    padding-top: 2mm;
+    text-align: center;
+  }
+}

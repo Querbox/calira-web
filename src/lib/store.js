@@ -100,6 +100,42 @@ export const actions = {
     if (motion === 'reduced') document.documentElement.setAttribute('data-motion', 'reduced')
     else document.documentElement.removeAttribute('data-motion')
   },
+  importData(json, { merge = false } = {}) {
+    if (!json || typeof json !== 'object') throw new Error('Ungültiges Format.')
+    const ck = Array.isArray(json.checkIns) ? json.checkIns : null
+    const md = Array.isArray(json.medications) ? json.medications : null
+    const fl = Array.isArray(json.flares) ? json.flares : null
+    if (!ck && !md && !fl) throw new Error('Datei enthält keine erkennbaren Einträge.')
+
+    set((s) => {
+      if (merge) {
+        const dedupe = (a, b) => {
+          const ids = new Set(a.map((x) => x.id))
+          return [...a, ...b.filter((x) => x && !ids.has(x.id))]
+        }
+        return {
+          ...s,
+          checkIns: ck ? dedupe(s.checkIns, ck) : s.checkIns,
+          medications: md ? dedupe(s.medications, md) : s.medications,
+          flares: fl ? dedupe(s.flares, fl) : s.flares,
+          name: json.name || s.name,
+        }
+      }
+      return {
+        ...s,
+        checkIns: ck ?? [],
+        medications: md ?? [],
+        flares: fl ?? [],
+        notes: json.notes && typeof json.notes === 'object' ? json.notes : {},
+        name: typeof json.name === 'string' ? json.name : s.name,
+      }
+    })
+    return {
+      checkIns: ck?.length || 0,
+      medications: md?.length || 0,
+      flares: fl?.length || 0,
+    }
+  },
   async checkForUpdates() {
     // Wipe the service-worker cache and unregister so the next load fetches
     // fresh assets. LocalStorage (and therefore all entries) is untouched.

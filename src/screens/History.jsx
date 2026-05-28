@@ -56,8 +56,8 @@ export default function History() {
         <div className="stats__cell"><div className="stats__num">{summary.medDays}</div><div className="stats__label">Mit Medis</div></div>
       </div>
 
-      <section className="section">
-        <div className="section__head">
+      <div className="card">
+        <div className="section__head" style={{ padding: '0 0 8px' }}>
           <div className="section__title">Schmerz-Landschaft</div>
           <div className="section__meta">Max pro Tag</div>
         </div>
@@ -79,10 +79,10 @@ export default function History() {
           <span>vor 30 Tagen</span>
           <span>heute</span>
         </div>
-      </section>
+      </div>
 
-      <section className="section">
-        <div className="section__head">
+      <div className="card">
+        <div className="section__head" style={{ padding: '0 0 4px' }}>
           <div className="section__title">Tagesliste</div>
         </div>
         <ul className="entries">
@@ -113,7 +113,7 @@ export default function History() {
             <li className="entry"><span /><span className="entry__meta">Noch keine Einträge.</span><span /></li>
           )}
         </ul>
-      </section>
+      </div>
 
       {openDay && (
         <DayDetail

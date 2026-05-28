@@ -62,6 +62,11 @@ export const actions = {
     set((s) => ({ ...s, fontMode: mode }))
     document.documentElement.setAttribute('data-font', mode)
   },
+  setScheme(scheme) {
+    set((s) => ({ ...s, scheme }))
+    if (scheme === 'dark') document.documentElement.setAttribute('data-scheme', 'dark')
+    else document.documentElement.removeAttribute('data-scheme')
+  },
   seedDemo() {
     const now = Date.now()
     const day = 86400000

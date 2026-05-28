@@ -5,9 +5,14 @@ import { useData, actions } from '../lib/store'
 import DailyTimeline from '../components/DailyTimeline'
 import CheckInSheet from '../components/CheckInSheet'
 import MedicationSheet from '../components/MedicationSheet'
+import PainDotScale from '../components/PainDotScale'
 import Icon from '../components/Icon'
 
-const SLOT_ICON = { morning: 'sun', midday: 'cloud', evening: 'moon' }
+const SLOT_META = {
+  morning: { icon: 'sun',   tint: 'morning' },
+  midday:  { icon: 'cloud', tint: 'midday' },
+  evening: { icon: 'moon',  tint: 'evening' },
+}
 
 export default function Home() {
   const data = useData()
@@ -37,24 +42,18 @@ export default function Home() {
     <>
       <header className="page-header">
         <div className="page-header__eyebrow">
-          <Icon name="clock" size={12} /> {dateLabel}
+          <Icon name="clock" size={13} /> {dateLabel}
         </div>
         <h1 className="page-header__title">
-          {data.name ? (
-            <>{greeting}, <em>{data.name}.</em></>
-          ) : (
-            <>{greeting}.</>
-          )}
+          {data.name ? <>{greeting}, <em>{data.name}.</em></> : <>{greeting}.</>}
         </h1>
-        {!data.name && (
-          <NamePrompt />
-        )}
+        {!data.name && <NamePrompt />}
       </header>
 
       {activeFlare && (
         <div className="flare">
           <div className="flare__head">
-            <Icon name="bolt" size={20} className="flare__icon" />
+            <div className="flare__icon"><Icon name="bolt" size={18} /></div>
             <div>
               <div className="flare__label">Ein Schub läuft</div>
               <div className="flare__time">
@@ -63,7 +62,7 @@ export default function Home() {
             </div>
           </div>
           <button
-            className="btn btn-ghost"
+            className="btn btn-soft"
             onClick={() => {
               const peak = Math.max(...today.map((c) => c.painLevel), activeFlare.peakIntensity || 5)
               actions.endFlare(activeFlare.id, peak)
@@ -74,12 +73,10 @@ export default function Home() {
         </div>
       )}
 
-      <section className="section">
-        <div className="section__head">
-          <div className="section__title">
-            <Icon name="spark" size={14} /> Tages-Baseline
-          </div>
-          <div className="section__meta">{today.length} / 3</div>
+      <div className="card hero-card">
+        <div className="hero-card__head">
+          <span className="hero-card__eyebrow"><Icon name="spark" size={14} /> Tages-Baseline</span>
+          <span className="hero-card__meta">{today.length} / 3 Check-ins</span>
         </div>
         <div className="figure">
           <div
@@ -88,62 +85,49 @@ export default function Home() {
           >
             {avg != null ? avg.toFixed(1) : '—'}
           </div>
-          <div className="figure__caption">
-            <div className="figure__caption-label">Schmerz Ø</div>
-            <div className="figure__caption-value">
-              {avg != null ? painLabel(Math.round(avg)) : 'noch kein Eintrag'}
-            </div>
-          </div>
+          <div className="figure__suffix">{avg != null ? painLabel(Math.round(avg)) : 'noch kein Eintrag'}</div>
         </div>
-        <div className="kv-row">
+        <PainDotScale value={avg ?? 0} size="lg" />
+        <div className="hero-card__stats">
           <div className="kv"><div className="kv__label">Max heute</div><div className="kv__value">{max ?? '—'}</div></div>
           <div className="kv"><div className="kv__label">Medikamente</div><div className="kv__value">{meds.length}</div></div>
           <div className="kv"><div className="kv__label">Schübe</div><div className="kv__value">{data.flares.filter((f) => dayKeyOf(f.startTime) === key).length}</div></div>
         </div>
-      </section>
+      </div>
 
-      <section className="section">
-        <div className="section__head">
-          <div className="section__title">Drei Momente</div>
-        </div>
-        <div className="slots">
-          {TIME_SLOTS.map((slot) => {
-            const entry = today.find((c) => c.timeSlot === slot.id)
-            return (
-              <button
-                key={slot.id}
-                className={`slot ${entry ? 'is-done' : ''}`}
-                onClick={() => openCheckIn(slot.id)}
-              >
-                <span className="slot__icon">
-                  <Icon name={SLOT_ICON[slot.id]} size={18} />
-                </span>
-                <span className="slot__label">{slot.label}</span>
-                {entry ? (
-                  <span className="slot__detail">
-                    {painLabel(entry.painLevel)}, {painTypeLabel(entry.dominantType)}
-                  </span>
-                ) : (
-                  <span className="slot__detail slot__detail--empty">noch offen</span>
-                )}
-                {entry ? (
-                  <span className="slot__value" style={{ color: painColor(entry.painLevel) }}>
-                    <span className="slot__tick" />{entry.painLevel}
-                  </span>
-                ) : (
-                  <span className="slot__value slot__value--empty">
-                    eintragen <Icon name="arrow" size={14} />
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-      </section>
+      <div className="section__head">
+        <div className="section__title">Drei Momente</div>
+      </div>
+      <div className="slots">
+        {TIME_SLOTS.map((slot) => {
+          const entry = today.find((c) => c.timeSlot === slot.id)
+          const meta = SLOT_META[slot.id]
+          return (
+            <button
+              key={slot.id}
+              className={`slot-tile card--tint-${meta.tint}`}
+              onClick={() => openCheckIn(slot.id)}
+            >
+              <div className="slot-tile__top">
+                <div className="slot-tile__icon-wrap"><Icon name={meta.icon} size={16} /></div>
+                <div className="slot-tile__arrow"><Icon name="arrow" size={14} /></div>
+              </div>
+              <div className="slot-tile__label">{slot.label}</div>
+              {entry ? (
+                <div className="slot-tile__detail">
+                  <em>{entry.painLevel}</em>/10 · {painLabel(entry.painLevel)}
+                </div>
+              ) : (
+                <div className="slot-tile__detail">eintragen</div>
+              )}
+            </button>
+          )
+        })}
+      </div>
 
-      <section className="section">
-        <div className="section__head">
-          <div className="section__title">Verlauf des Tages</div>
+      <div className="card">
+        <div className="hero-card__head" style={{ marginBottom: 6 }}>
+          <span className="hero-card__eyebrow"><Icon name="clock" size={14} /> Verlauf des Tages</span>
         </div>
         <DailyTimeline
           checkIns={data.checkIns}
@@ -151,28 +135,26 @@ export default function Home() {
           flares={data.flares}
           dateKey={key}
         />
-      </section>
+      </div>
 
       <div className="actions">
-        <button className="actions__btn" onClick={() => setSheet('med')}>
+        <button className="btn btn-soft" onClick={() => setSheet('med')}>
           <Icon name="pill" size={16} /> Medikament
         </button>
-        {!activeFlare && (
+        {!activeFlare ? (
           <button
-            className="actions__btn actions__btn--alert"
+            className="btn btn-accent"
             onClick={() => actions.addFlare({ peakIntensity: 5, quality: 'akut' })}
           >
             <Icon name="bolt" size={16} /> Schub starten
           </button>
-        )}
+        ) : <span />}
       </div>
 
       {meds.length > 0 && (
-        <section className="section">
-          <div className="section__head">
-            <div className="section__title">
-              <Icon name="pill" size={14} /> Medikamente heute
-            </div>
+        <div className="card">
+          <div className="hero-card__head" style={{ marginBottom: 8 }}>
+            <span className="hero-card__eyebrow"><Icon name="pill" size={14} /> Medikamente heute</span>
           </div>
           <ul className="entries">
             {meds.map((m) => (
@@ -188,7 +170,7 @@ export default function Home() {
               </li>
             ))}
           </ul>
-        </section>
+        </div>
       )}
 
       {sheet === 'checkin' && <CheckInSheet defaultSlot={defaultSlot} onClose={() => setSheet(null)} />}

@@ -17,6 +17,7 @@
         const root = document.documentElement;
         if (d.theme) root.setAttribute('data-theme', d.theme);
         if (d.fontMode) root.setAttribute('data-font', d.fontMode);
+        if (d.scheme === 'dark') root.setAttribute('data-scheme', 'dark');
       } catch (_) {}
     </script>
     <title>Calira — ein leises Tagebuch</title>

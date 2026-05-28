@@ -1,29 +1,50 @@
 :root {
-  /* Warm ink palette — a quiet, paper-like dark */
-  --bg: #14110f;
-  --bg-soft: #1b1815;
-  --bg-elev: #201c18;
-  --ink: #ebe4d8;
-  --ink-soft: #b3a999;
-  --ink-faint: #7a7062;
-  --ink-fainter: #443c34;
-  --line: #2a2520;
-  --line-strong: #3a342d;
+  /* LIGHT THEME — warm cream, soft cards (the new default) */
+  --bg: #f6f0e3;
+  --bg-soft: #efe7d4;
+  --bg-card: #ffffff;
+  --bg-elev: #fffdf6;
+  --ink: #1d1814;
+  --ink-soft: #4a443d;
+  --ink-faint: #8b8275;
+  --ink-fainter: #b8ad9a;
+  --ink-quiet: #d8ccb5;
+  --line: #ebe2cc;
+  --line-strong: #d6c9ad;
+  --shadow-card:
+    0 1px 2px rgba(40, 30, 18, 0.04),
+    0 6px 18px rgba(60, 40, 18, 0.06);
+  --shadow-hover:
+    0 2px 4px rgba(40, 30, 18, 0.06),
+    0 12px 28px rgba(60, 40, 18, 0.10);
 
-  /* Accent (theme): clay is the default, can be overridden by [data-theme] */
-  --clay: #d28868;
-  --clay-soft: #b56c4c;
-  --clay-ink: #1d100a;
+  /* Pastel sub-tints used for time-of-day cards and category surfaces */
+  --tint-morning: #f1e6cc;
+  --tint-midday:  #dde6d2;
+  --tint-evening: #d6dfe8;
+  --tint-night:   #e6d9e5;
+  --tint-warm:    #f4ddc8;
 
-  --pain-1: #8a9a78;
-  --pain-3: #c2ad6e;
-  --pain-5: #d29260;
-  --pain-7: #c46551;
-  --pain-10: #9a4239;
+  /* Accent — coral by default, matches the wellness references */
+  --clay: #ec7a5a;
+  --clay-soft: #cf5a3a;
+  --clay-ink: #2a0a04;
 
-  --success: #8a9a78;
-  --warning: #d29260;
-  --danger: #c46551;
+  /* Pain scale — deepened slightly so they read on cream */
+  --pain-1:  #7d9f78;
+  --pain-3:  #c3a14a;
+  --pain-5:  #d57f3e;
+  --pain-7:  #c25433;
+  --pain-10: #8c2f24;
+
+  --success: #7d9f78;
+  --warning: #d57f3e;
+  --danger:  #c25433;
+
+  --radius-sm: 12px;
+  --radius:    18px;
+  --radius-lg: 24px;
+  --radius-xl: 28px;
 
   --serif: 'Fraunces', 'Iowan Old Style', 'Palatino', Georgia, serif;
   --sans: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
@@ -33,7 +54,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'ss01', 'cv11';
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -54,10 +75,9 @@ body {
   letter-spacing: -0.005em;
   overflow-x: hidden;
   background-image:
-    radial-gradient(ellipse 90% 70% at 50% -10%, rgba(210, 136, 104, 0.07) 0%, transparent 60%),
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.035 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(236, 122, 90, 0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(236, 122, 90, 0.06) 0%, transparent 60%);
   background-attachment: fixed, fixed;
-  /* Prevent rubber-band overscroll showing through transparent tabbar */
   overscroll-behavior-y: none;
 }
 
@@ -77,24 +97,56 @@ h1, h2, h3, h4, p { margin: 0; }
 ul { margin: 0; padding: 0; list-style: none; }
 a { color: inherit; }
 
-::selection { background: var(--clay); color: var(--clay-ink); }
+::selection { background: var(--clay); color: #fff; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 
 .num { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-
-/* Icons — inherit color from parent, small + subtle */
 .icon { flex-shrink: 0; display: inline-block; vertical-align: middle; }
 
-/* ─── Theme variants (accent color) ────────────────────────── */
-:root[data-theme="sage"]    { --clay: #8aa890; --clay-soft: #6a8a70; --clay-ink: #0c1410; }
-:root[data-theme="plum"]    { --clay: #b87a9a; --clay-soft: #985e7c; --clay-ink: #1a0d15; }
-:root[data-theme="ocean"]   { --clay: #7aa3c2; --clay-soft: #5a83a2; --clay-ink: #0a1218; }
-:root[data-theme="amber"]   { --clay: #d4b76a; --clay-soft: #b09650; --clay-ink: #1a1408; }
-:root[data-theme="rose"]    { --clay: #d97a8a; --clay-soft: #b85c6c; --clay-ink: #1a0a10; }
+/* ─── Color schemes ────────────────────────────────────────── */
+/* Dark scheme — opt-in via [data-scheme="dark"] */
+:root[data-scheme="dark"] {
+  color-scheme: dark;
+  --bg: #14110f;
+  --bg-soft: #1b1815;
+  --bg-card: #20-1c-18; /* fallback */
+  --bg-card: #221d18;
+  --bg-elev: #251f19;
+  --ink: #ebe4d8;
+  --ink-soft: #b3a999;
+  --ink-faint: #7a7062;
+  --ink-fainter: #443c34;
+  --ink-quiet: #2e2620;
+  --line: #2a2520;
+  --line-strong: #3a342d;
+  --shadow-card:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 6px 18px rgba(0, 0, 0, 0.35);
+  --shadow-hover:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 12px 28px rgba(0, 0, 0, 0.45);
+  --tint-morning: #2a241a;
+  --tint-midday:  #1f2820;
+  --tint-evening: #1d2530;
+  --tint-night:   #2a1d2a;
+  --tint-warm:    #2d1f15;
+}
+:root[data-scheme="dark"] body {
+  background-image:
+    radial-gradient(ellipse 90% 70% at 50% -10%, rgba(236, 122, 90, 0.08) 0%, transparent 60%);
+}
 
-/* ─── Font modes ──────────────────────────────────────────── */
+/* ─── Accent variants ──────────────────────────────────────── */
+:root[data-theme="clay"]    { --clay: #ec7a5a; --clay-soft: #cf5a3a; --clay-ink: #2a0a04; }
+:root[data-theme="rose"]    { --clay: #d96c8a; --clay-soft: #b85273; --clay-ink: #2a0a14; }
+:root[data-theme="amber"]   { --clay: #d4a73d; --clay-soft: #b08a24; --clay-ink: #221808; }
+:root[data-theme="sage"]    { --clay: #6f9a72; --clay-soft: #587a59; --clay-ink: #0a140c; }
+:root[data-theme="ocean"]   { --clay: #5a8aaf; --clay-soft: #406b8c; --clay-ink: #0a151c; }
+:root[data-theme="plum"]    { --clay: #a06591; --clay-soft: #804c72; --clay-ink: #1c0a18; }
+
+/* ─── Font modes ───────────────────────────────────────────── */
 :root[data-font="editorial"] {
   --serif: 'Newsreader', 'Iowan Old Style', 'Palatino', Georgia, serif;
   --sans: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
@@ -107,7 +159,6 @@ a { color: inherit; }
   --serif: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --sans: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
-/* DM Serif Text doesn't have a 500 weight, normalize */
 :root[data-font="modern"] .page-header__title,
 :root[data-font="modern"] .sheet__title,
 :root[data-font="modern"] .figure__num,
@@ -116,7 +167,6 @@ a { color: inherit; }
   font-weight: 400;
   font-variation-settings: normal;
 }
-/* Mono mode: dial down italic-emphasis */
 :root[data-font="mono"] em {
   font-style: normal;
   font-weight: 700;

@@ -20,7 +20,9 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', data.theme || 'clay')
     document.documentElement.setAttribute('data-font', data.fontMode || 'quiet')
-  }, [data.theme, data.fontMode])
+    if (data.scheme === 'dark') document.documentElement.setAttribute('data-scheme', 'dark')
+    else document.documentElement.removeAttribute('data-scheme')
+  }, [data.theme, data.fontMode, data.scheme])
 
   function goto(next) {
     if (next === tab) return

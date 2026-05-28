@@ -2,12 +2,12 @@ import { useData, actions } from '../lib/store'
 import Icon from '../components/Icon'
 
 const THEMES = [
-  { id: 'clay',  label: 'Clay',  swatch: '#d28868' },
-  { id: 'rose',  label: 'Rose',  swatch: '#d97a8a' },
-  { id: 'amber', label: 'Amber', swatch: '#d4b76a' },
-  { id: 'sage',  label: 'Sage',  swatch: '#8aa890' },
-  { id: 'ocean', label: 'Ocean', swatch: '#7aa3c2' },
-  { id: 'plum',  label: 'Plum',  swatch: '#b87a9a' },
+  { id: 'clay',  label: 'Clay',  swatch: '#ec7a5a' },
+  { id: 'rose',  label: 'Rose',  swatch: '#d96c8a' },
+  { id: 'amber', label: 'Amber', swatch: '#d4a73d' },
+  { id: 'sage',  label: 'Sage',  swatch: '#6f9a72' },
+  { id: 'ocean', label: 'Ocean', swatch: '#5a8aaf' },
+  { id: 'plum',  label: 'Plum',  swatch: '#a06591' },
 ]
 
 const FONTS = [
@@ -20,6 +20,7 @@ const FONTS = [
 export default function Settings() {
   const data = useData()
   const total = data.checkIns.length + data.medications.length + data.flares.length
+  const scheme = data.scheme || 'light'
 
   function exportData() {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -35,13 +36,13 @@ export default function Settings() {
     <>
       <header className="page-header">
         <div className="page-header__eyebrow">
-          <Icon name="settings" size={12} /> Einstellungen
+          <Icon name="settings" size={13} /> Einstellungen
         </div>
         <h1 className="page-header__title">Daten & <em>Stille.</em></h1>
       </header>
 
-      <section className="section">
-        <div className="section__head">
+      <div className="card">
+        <div className="section__head" style={{ padding: '0 0 10px' }}>
           <div className="section__title">Name</div>
         </div>
         <input
@@ -51,13 +52,33 @@ export default function Settings() {
           placeholder="dein Vorname (z. B. Jana)"
           maxLength={32}
         />
-        <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>
-          Wird nur in der Begrüßung auf der Startseite verwendet.
+        <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+          Erscheint nur in der Begrüßung auf der Startseite.
         </p>
-      </section>
+      </div>
 
-      <section className="section">
-        <div className="section__head">
+      <div className="card">
+        <div className="section__head" style={{ padding: '0 0 10px' }}>
+          <div className="section__title">Darstellung</div>
+        </div>
+        <div className="scheme-toggle">
+          <button
+            className={`scheme-toggle__btn ${scheme === 'light' ? 'is-active' : ''}`}
+            onClick={() => actions.setScheme('light')}
+          >
+            <Icon name="sun" size={14} /> Hell
+          </button>
+          <button
+            className={`scheme-toggle__btn ${scheme === 'dark' ? 'is-active' : ''}`}
+            onClick={() => actions.setScheme('dark')}
+          >
+            <Icon name="moon" size={14} /> Dunkel
+          </button>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="section__head" style={{ padding: '0 0 10px' }}>
           <div className="section__title">Akzentfarbe</div>
           <div className="section__meta">{THEMES.find((t) => t.id === (data.theme || 'clay'))?.label}</div>
         </div>
@@ -74,10 +95,10 @@ export default function Settings() {
             </button>
           ))}
         </div>
-      </section>
+      </div>
 
-      <section className="section">
-        <div className="section__head">
+      <div className="card">
+        <div className="section__head" style={{ padding: '0 0 10px' }}>
           <div className="section__title">Schriftpaarung</div>
           <div className="section__meta">{FONTS.find((f) => f.id === (data.fontMode || 'quiet'))?.label}</div>
         </div>
@@ -94,39 +115,39 @@ export default function Settings() {
             </button>
           ))}
         </div>
-      </section>
+      </div>
 
-      <section className="section">
-        <div className="section__head">
+      <div className="card">
+        <div className="section__head" style={{ padding: '0 0 10px' }}>
           <div className="section__title">Deine Daten</div>
         </div>
         <p className="muted">
           Alle Einträge bleiben <em>lokal</em> in deinem Browser. Nichts wird hochgeladen, niemand kann mitlesen.
         </p>
-        <div className="kv-row">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
           <div className="kv"><div className="kv__label">Einträge</div><div className="kv__value">{total}</div></div>
           <div className="kv"><div className="kv__label">Check-ins</div><div className="kv__value">{data.checkIns.length}</div></div>
           <div className="kv"><div className="kv__label">Medis</div><div className="kv__value">{data.medications.length}</div></div>
         </div>
-      </section>
-
-      <div className="actions">
-        <button className="actions__btn" onClick={exportData}>
-          <Icon name="download" size={16} /> Exportieren
-        </button>
-        <button className="actions__btn" onClick={actions.seedDemo}>
-          <Icon name="refresh" size={16} /> Demo-Daten
-        </button>
+        <div className="actions" style={{ marginTop: 16, gridTemplateColumns: '1fr 1fr' }}>
+          <button className="btn btn-soft" onClick={exportData}>
+            <Icon name="download" size={15} /> Exportieren
+          </button>
+          <button className="btn btn-soft" onClick={actions.seedDemo}>
+            <Icon name="refresh" size={15} /> Demo-Daten
+          </button>
+        </div>
         <button
-          className="actions__btn actions__btn--alert"
+          className="btn btn-danger btn-block"
+          style={{ marginTop: 8 }}
           onClick={() => { if (confirm('Wirklich alle Daten löschen?')) actions.reset() }}
         >
-          <Icon name="trash" size={16} /> Löschen
+          <Icon name="trash" size={15} /> Alle Daten löschen
         </button>
       </div>
 
-      <section className="section">
-        <div className="section__head">
+      <div className="card">
+        <div className="section__head" style={{ padding: '0 0 10px' }}>
           <div className="section__title">Über Calira</div>
         </div>
         <p className="muted">
@@ -134,21 +155,11 @@ export default function Settings() {
           Morgens, Mittags, Abends. Keine Pop-ups, keine Streaks, keine Punkte.
           <em> Nur du und der Tag.</em>
         </p>
-      </section>
-
-      <section className="section">
-        <div className="section__head">
-          <div className="section__title">Gesten</div>
-        </div>
-        <p className="muted">
-          Tabs wechseln mit Wisch nach links / rechts. Sheets schließt du, indem du sie
-          nach unten ziehst. Im Check-in wechselst du die Schritte mit dem Finger.
-        </p>
-      </section>
+      </div>
 
       <div className="wordmark-block">
         <div className="wordmark-block__name">Calira</div>
-        <div className="wordmark-block__tag">v0.2 · Fraunces & JetBrains Mono</div>
+        <div className="wordmark-block__tag">v0.3 · lokal · gestenfreundlich</div>
       </div>
     </>
   )

@@ -82,6 +82,22 @@ export const actions = {
     if (motion === 'reduced') document.documentElement.setAttribute('data-motion', 'reduced')
     else document.documentElement.removeAttribute('data-motion')
   },
+  async checkForUpdates() {
+    // Wipe the service-worker cache and unregister so the next load fetches
+    // fresh assets. LocalStorage (and therefore all entries) is untouched.
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys()
+        await Promise.all(keys.map((k) => caches.delete(k)))
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations()
+        await Promise.all(regs.map((r) => r.unregister()))
+      }
+    } catch (_) { /* swallow — we still reload */ }
+    // Bypass any HTTP cache on the navigation request itself
+    window.location.reload()
+  },
   seedDemo() {
     const now = Date.now()
     const day = 86400000

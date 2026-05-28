@@ -153,6 +153,24 @@ export default function Settings() {
 
       <div className="card">
         <div className="section__head" style={{ padding: '0 0 10px' }}>
+          <div className="section__title">App-Update</div>
+        </div>
+        <p className="muted" style={{ fontSize: 13 }}>
+          Falls Calira nach einem Update gleich aussieht, ist wahrscheinlich der
+          Cache der Home-Screen-App noch alt. <em>Auf Updates prüfen</em> lädt
+          alles frisch — deine Einträge bleiben erhalten.
+        </p>
+        <button
+          className="btn btn-soft btn-block"
+          style={{ marginTop: 12 }}
+          onClick={() => actions.checkForUpdates()}
+        >
+          <Icon name="refresh" size={15} /> Auf Updates prüfen & neu laden
+        </button>
+      </div>
+
+      <div className="card">
+        <div className="section__head" style={{ padding: '0 0 10px' }}>
           <div className="section__title">Deine Daten</div>
         </div>
         <p className="muted">

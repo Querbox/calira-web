@@ -64,18 +64,28 @@ export function usePager(ref, { onLeft, onRight, commitAt = 80, maxDrag = 160 } 
       const speed = Math.abs(dx) / dt
       const fastEnough = speed > 0.5 && Math.abs(dx) > 24
 
-      el.style.transition = 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s'
-      if (!s.reduced && (Math.abs(dx) > commitAt || fastEnough)) {
-        // Commit
+      const shouldCommit = Math.abs(dx) > commitAt || fastEnough
+      if (shouldCommit) {
         const dir = dx < 0 ? 'left' : 'right'
-        el.style.transform = `translateX(${dir === 'left' ? -window.innerWidth * 0.5 : window.innerWidth * 0.5}px)`
-        el.style.opacity = '0'
-        setTimeout(() => {
+        if (s.reduced) {
+          // No animation — commit immediately
+          el.style.transition = ''
+          el.style.transform = ''
+          el.style.opacity = ''
           if (dir === 'left') onLeft?.()
           else onRight?.()
-        }, 140)
+        } else {
+          el.style.transition = 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s'
+          el.style.transform = `translateX(${dir === 'left' ? -window.innerWidth * 0.5 : window.innerWidth * 0.5}px)`
+          el.style.opacity = '0'
+          setTimeout(() => {
+            if (dir === 'left') onLeft?.()
+            else onRight?.()
+          }, 140)
+        }
       } else {
-        // Spring back
+        // Spring back (or just clear in reduced mode)
+        el.style.transition = s.reduced ? '' : 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s'
         el.style.transform = ''
         el.style.opacity = ''
       }

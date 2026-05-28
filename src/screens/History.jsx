@@ -1,12 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { dayKeyOf, todayKey } from '../lib/storage'
 import { useData } from '../lib/store'
 import { painColor, painLabel, painTypeLabel } from '../lib/pain'
+import { useSwipe, useDragDownToDismiss } from '../lib/useSwipe'
 import DailyTimeline from '../components/DailyTimeline'
+import Icon from '../components/Icon'
 
 export default function History() {
   const data = useData()
-  const [openDay, setOpenDay] = useState(null)
+  const [openDayKey, setOpenDayKey] = useState(null)
 
   const days = useMemo(() => {
     const map = new Map()
@@ -35,10 +37,15 @@ export default function History() {
     return { tracked: withData.length, good, severe, medDays }
   }, [days])
 
+  const dayList = [...days].reverse().filter((d) => d.checkIns.length || d.meds.length || d.flares.length)
+  const openDay = openDayKey ? days.find((d) => d.key === openDayKey) : null
+
   return (
     <>
       <header className="page-header">
-        <div className="page-header__eyebrow">Verlauf</div>
+        <div className="page-header__eyebrow">
+          <Icon name="history" size={12} /> Verlauf
+        </div>
         <h1 className="page-header__title">Die letzten <em>dreißig</em> Tage</h1>
       </header>
 
@@ -62,8 +69,8 @@ export default function History() {
                 key={d.key}
                 className={`landscape__bar ${d.key === todayKey() ? 'is-today' : ''}`}
                 style={{ height: `${h}%`, background: d.max != null ? painColor(d.max) : undefined }}
-                onClick={() => setOpenDay(d)}
-                title={`${d.date.toLocaleDateString('de-DE')} · Max ${d.max ?? '—'}`}
+                onClick={() => setOpenDayKey(d.key)}
+                aria-label={`${d.date.toLocaleDateString('de-DE')} öffnen`}
               />
             )
           })}
@@ -79,9 +86,9 @@ export default function History() {
           <div className="section__title">Tagesliste</div>
         </div>
         <ul className="entries">
-          {[...days].reverse().filter((d) => d.checkIns.length || d.meds.length || d.flares.length).map((d) => (
+          {dayList.map((d) => (
             <li key={d.key}>
-              <button className="entry entry--button" onClick={() => setOpenDay(d)}>
+              <button className="entry entry--button" onClick={() => setOpenDayKey(d.key)}>
                 <span className="entry__time">
                   {d.date.toLocaleDateString('de-DE', { weekday: 'short' }).replace('.', '')}
                   <br />
@@ -102,21 +109,59 @@ export default function History() {
               </button>
             </li>
           ))}
-          {days.every((d) => !d.checkIns.length && !d.meds.length && !d.flares.length) && (
+          {dayList.length === 0 && (
             <li className="entry"><span /><span className="entry__meta">Noch keine Einträge.</span><span /></li>
           )}
         </ul>
       </section>
 
-      {openDay && <DayDetail day={openDay} data={data} onClose={() => setOpenDay(null)} />}
+      {openDay && (
+        <DayDetail
+          day={openDay}
+          data={data}
+          dayList={dayList}
+          onNavigate={(delta) => {
+            const idx = dayList.findIndex((d) => d.key === openDay.key)
+            const next = dayList[idx + delta]
+            if (next) setOpenDayKey(next.key)
+          }}
+          onClose={() => setOpenDayKey(null)}
+        />
+      )}
     </>
   )
 }
 
-function DayDetail({ day, data, onClose }) {
+function DayDetail({ day, data, dayList, onNavigate, onClose }) {
+  const sheetRef = useRef(null)
+
+  useDragDownToDismiss(sheetRef, {
+    onDrag: (dy) => {
+      if (sheetRef.current) sheetRef.current.style.transform = `translateY(${dy}px)`
+    },
+    onRelease: () => {
+      const el = sheetRef.current
+      if (!el) return
+      const m = new DOMMatrix(getComputedStyle(el).transform)
+      el.style.transform = ''
+      if (m.m42 > 120) onClose()
+    },
+  })
+
+  useSwipe(sheetRef, {
+    onLeft: () => onNavigate(1),
+    onRight: () => onNavigate(-1),
+    threshold: 80,
+  })
+
+  const idx = dayList.findIndex((d) => d.key === day.key)
+  const hasPrev = idx >= 0 && idx < dayList.length - 1
+  const hasNext = idx > 0
+
   return (
     <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet" onClick={(e) => e.stopPropagation()}>
+      <div className="sheet" ref={sheetRef} onClick={(e) => e.stopPropagation()}>
+        <div className="sheet__grabber" />
         <div className="sheet__head">
           <div>
             <div className="sheet__eyebrow">
@@ -128,6 +173,7 @@ function DayDetail({ day, data, onClose }) {
           </div>
           <button className="sheet__close" onClick={onClose} aria-label="Schließen">×</button>
         </div>
+
         <div className="sheet__body">
           <div className="kv-row" style={{ borderTop: 'none', paddingTop: 0 }}>
             <div className="kv"><div className="kv__label">Schmerz Ø</div><div className="kv__value">{day.avg != null ? day.avg.toFixed(1) : '—'}</div></div>
@@ -178,6 +224,10 @@ function DayDetail({ day, data, onClose }) {
               </ul>
             </>
           )}
+
+          <div className="sheet__hint">
+            {hasPrev || hasNext ? 'wischen zum Tag wechseln' : ''} · nach unten ziehen zum Schließen
+          </div>
         </div>
       </div>
     </div>

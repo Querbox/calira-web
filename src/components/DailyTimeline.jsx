@@ -1,5 +1,6 @@
 import { painColor } from '../lib/pain'
 import { dayKeyOf, todayKey } from '../lib/storage'
+import Icon from './Icon'
 
 const HOURS = 24
 
@@ -32,7 +33,7 @@ export default function DailyTimeline({ checkIns, medications, flares, dateKey }
 
         {dayFlares.map((f) => {
           const start = new Date(f.startTime)
-          const endTs = f.endTime || (isToday ? now.getTime() : start.setHours(23, 59, 0, 0))
+          const endTs = f.endTime || (isToday ? now.getTime() : new Date(start).setHours(23, 59, 0, 0))
           const end = new Date(endTs)
           const sPct = ((start.getHours() + start.getMinutes() / 60) / HOURS) * 100
           const ePct = ((end.getHours() + end.getMinutes() / 60) / HOURS) * 100
@@ -78,7 +79,9 @@ export default function DailyTimeline({ checkIns, medications, flares, dateKey }
               className="timeline__med"
               style={{ left: `${pct}%` }}
               title={`${m.medicationName} · ${dt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`}
-            />
+            >
+              <Icon name="pill" size={12} />
+            </div>
           )
         })}
 
@@ -86,9 +89,11 @@ export default function DailyTimeline({ checkIns, medications, flares, dateKey }
       </div>
 
       <div className="timeline__legend">
-        <span><span className="timeline__legend-dot" style={{ background: 'var(--pain-5)' }} />Schmerz</span>
-        <span><span className="timeline__legend-dot" style={{ background: 'var(--ink-soft)' }} />Medi</span>
-        {nowPct != null && <span><span className="timeline__legend-dot" style={{ background: 'var(--clay)' }} />Jetzt</span>}
+        <span><span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--pain-5)' }} /> Schmerz</span>
+        <span><Icon name="pill" size={12} /> Medi</span>
+        {nowPct != null && (
+          <span><span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--clay)' }} /> Jetzt</span>
+        )}
       </div>
     </div>
   )

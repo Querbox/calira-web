@@ -5,6 +5,9 @@ import { useData, actions } from '../lib/store'
 import DailyTimeline from '../components/DailyTimeline'
 import CheckInSheet from '../components/CheckInSheet'
 import MedicationSheet from '../components/MedicationSheet'
+import Icon from '../components/Icon'
+
+const SLOT_ICON = { morning: 'sun', midday: 'cloud', evening: 'moon' }
 
 export default function Home() {
   const data = useData()
@@ -16,10 +19,9 @@ export default function Home() {
   const meds = data.medications.filter((m) => dayKeyOf(m.timestamp) === key)
   const activeFlare = data.flares.find((f) => !f.endTime)
 
-  const avg =
-    today.length > 0
-      ? Math.round((today.reduce((s, c) => s + c.painLevel, 0) / today.length) * 10) / 10
-      : null
+  const avg = today.length > 0
+    ? Math.round((today.reduce((s, c) => s + c.painLevel, 0) / today.length) * 10) / 10
+    : null
   const max = today.length ? Math.max(...today.map((c) => c.painLevel)) : null
 
   const now = new Date()
@@ -34,7 +36,9 @@ export default function Home() {
   return (
     <>
       <header className="page-header">
-        <div className="page-header__eyebrow">{dateLabel}</div>
+        <div className="page-header__eyebrow">
+          <Icon name="clock" size={12} /> {dateLabel}
+        </div>
         <h1 className="page-header__title">
           {greeting}, <em>heute.</em>
         </h1>
@@ -42,10 +46,13 @@ export default function Home() {
 
       {activeFlare && (
         <div className="flare">
-          <div>
-            <div className="flare__label">Ein Schub läuft.</div>
-            <div className="flare__time">
-              seit {new Date(activeFlare.startTime).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+          <div className="flare__head">
+            <Icon name="bolt" size={20} className="flare__icon" />
+            <div>
+              <div className="flare__label">Ein Schub läuft</div>
+              <div className="flare__time">
+                seit {new Date(activeFlare.startTime).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+              </div>
             </div>
           </div>
           <button
@@ -62,8 +69,10 @@ export default function Home() {
 
       <section className="section">
         <div className="section__head">
-          <div className="section__title">Tages-Baseline</div>
-          <div className="section__meta">{today.length} / 3 Check-ins</div>
+          <div className="section__title">
+            <Icon name="spark" size={14} /> Tages-Baseline
+          </div>
+          <div className="section__meta">{today.length} / 3</div>
         </div>
         <div className="figure">
           <div
@@ -94,7 +103,14 @@ export default function Home() {
           {TIME_SLOTS.map((slot) => {
             const entry = today.find((c) => c.timeSlot === slot.id)
             return (
-              <button key={slot.id} className="slot" onClick={() => openCheckIn(slot.id)}>
+              <button
+                key={slot.id}
+                className={`slot ${entry ? 'is-done' : ''}`}
+                onClick={() => openCheckIn(slot.id)}
+              >
+                <span className="slot__icon">
+                  <Icon name={SLOT_ICON[slot.id]} size={18} />
+                </span>
                 <span className="slot__label">{slot.label}</span>
                 {entry ? (
                   <span className="slot__detail">
@@ -108,7 +124,9 @@ export default function Home() {
                     <span className="slot__tick" />{entry.painLevel}
                   </span>
                 ) : (
-                  <span className="slot__value slot__value--empty">eintragen →</span>
+                  <span className="slot__value slot__value--empty">
+                    eintragen <Icon name="arrow" size={14} />
+                  </span>
                 )}
               </button>
             )
@@ -129,20 +147,26 @@ export default function Home() {
       </section>
 
       <div className="actions">
-        <button className="actions__btn" onClick={() => setSheet('med')}>Medikament eintragen</button>
+        <button className="actions__btn" onClick={() => setSheet('med')}>
+          <Icon name="pill" size={16} /> Medikament
+        </button>
         {!activeFlare && (
           <button
             className="actions__btn actions__btn--alert"
             onClick={() => actions.addFlare({ peakIntensity: 5, quality: 'akut' })}
           >
-            Schub starten
+            <Icon name="bolt" size={16} /> Schub starten
           </button>
         )}
       </div>
 
       {meds.length > 0 && (
         <section className="section">
-          <div className="section__head"><div className="section__title">Medikamente heute</div></div>
+          <div className="section__head">
+            <div className="section__title">
+              <Icon name="pill" size={14} /> Medikamente heute
+            </div>
+          </div>
           <ul className="entries">
             {meds.map((m) => (
               <li key={m.id} className="entry">

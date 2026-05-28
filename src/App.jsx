@@ -1,34 +1,56 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Home from './screens/Home'
 import History from './screens/History'
 import Settings from './screens/Settings'
+import Icon from './components/Icon'
+import { useSwipe } from './lib/useSwipe'
 
 const TABS = [
-  { id: 'home', label: 'Heute' },
-  { id: 'history', label: 'Verlauf' },
-  { id: 'settings', label: 'Mehr' },
+  { id: 'home', label: 'Heute', icon: 'sun' },
+  { id: 'history', label: 'Verlauf', icon: 'history' },
+  { id: 'settings', label: 'Mehr', icon: 'settings' },
 ]
 
 export default function App() {
   const [tab, setTab] = useState('home')
+  const pagesRef = useRef(null)
+
+  function goto(next) {
+    if (next === tab) return
+    setTab(next)
+  }
+  function relative(delta) {
+    const i = TABS.findIndex((t) => t.id === tab)
+    const n = TABS[(i + delta + TABS.length) % TABS.length]
+    if (n) goto(n.id)
+  }
+
+  useSwipe(pagesRef, {
+    onLeft: () => relative(1),
+    onRight: () => relative(-1),
+    threshold: 70,
+  })
 
   return (
     <div className="app">
-      <main className="app__main">
-        {tab === 'home' && <Home />}
-        {tab === 'history' && <History />}
-        {tab === 'settings' && <Settings />}
-      </main>
+      <div className="app__pages" ref={pagesRef}>
+        <main className="app__main" key={tab}>
+          {tab === 'home' && <Home />}
+          {tab === 'history' && <History />}
+          {tab === 'settings' && <Settings />}
+        </main>
+      </div>
 
       <nav className="tabbar">
-        <span className="wordmark">Calira</span>
         {TABS.map((t) => (
           <button
             key={t.id}
             className={`tabbar__item ${tab === t.id ? 'is-active' : ''}`}
-            onClick={() => setTab(t.id)}
+            onClick={() => goto(t.id)}
+            aria-label={t.label}
           >
-            {t.label}
+            <Icon name={t.icon} size={18} />
+            <span>{t.label}</span>
           </button>
         ))}
       </nav>

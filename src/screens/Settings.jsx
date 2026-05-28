@@ -1,4 +1,5 @@
 import { useData, actions } from '../lib/store'
+import Icon from '../components/Icon'
 
 export default function Settings() {
   const data = useData()
@@ -17,12 +18,16 @@ export default function Settings() {
   return (
     <>
       <header className="page-header">
-        <div className="page-header__eyebrow">Einstellungen</div>
+        <div className="page-header__eyebrow">
+          <Icon name="settings" size={12} /> Einstellungen
+        </div>
         <h1 className="page-header__title">Daten & <em>Stille.</em></h1>
       </header>
 
       <section className="section">
-        <div className="section__head"><div className="section__title">Deine Daten</div></div>
+        <div className="section__head">
+          <div className="section__title">Deine Daten</div>
+        </div>
         <p className="muted">
           Alle Einträge bleiben <em>lokal</em> in deinem Browser. Nichts wird hochgeladen, niemand kann mitlesen.
         </p>
@@ -34,32 +39,45 @@ export default function Settings() {
       </section>
 
       <div className="actions">
-        <button className="actions__btn" onClick={exportData}>Daten exportieren</button>
-        <button className="actions__btn" onClick={actions.seedDemo}>Demo-Daten laden</button>
+        <button className="actions__btn" onClick={exportData}>
+          <Icon name="download" size={16} /> Exportieren
+        </button>
+        <button className="actions__btn" onClick={actions.seedDemo}>
+          <Icon name="refresh" size={16} /> Demo-Daten
+        </button>
         <button
           className="actions__btn actions__btn--alert"
           onClick={() => { if (confirm('Wirklich alle Daten löschen?')) actions.reset() }}
         >
-          Alles löschen
+          <Icon name="trash" size={16} /> Löschen
         </button>
       </div>
 
       <section className="section">
-        <div className="section__head"><div className="section__title">Über Calira</div></div>
+        <div className="section__head">
+          <div className="section__title">Über Calira</div>
+        </div>
         <p className="muted">
-          Ein leises Tagebuch für chronische Kopfschmerzen. Drei Momente am Tag, die du
-          dir selbst widmest — Morgens, Mittags, Abends. Keine Pop-ups, keine Streaks, keine
-          Punkte. <em>Nur du und der Tag.</em>
+          Ein leises Tagebuch für chronische Kopfschmerzen. Drei Momente am Tag —
+          Morgens, Mittags, Abends. Keine Pop-ups, keine Streaks, keine Punkte.
+          <em> Nur du und der Tag.</em>
         </p>
       </section>
 
       <section className="section">
-        <div className="section__head"><div className="section__title">Colophon</div></div>
+        <div className="section__head">
+          <div className="section__title">Gesten</div>
+        </div>
         <p className="muted">
-          Typografie: Fraunces & JetBrains Mono. Aufzeichnung: LocalStorage. Code auf
-          <a href="https://github.com/Querbox/calira-web" style={{ color: 'var(--clay)' }} target="_blank" rel="noreferrer"> GitHub</a>.
+          Tabs wechseln mit Wisch nach links / rechts. Sheets schließt du, indem du sie
+          nach unten ziehst. Im Check-in wechselst du die Schritte mit dem Finger.
         </p>
       </section>
+
+      <div className="wordmark-block">
+        <div className="wordmark-block__name">Calira</div>
+        <div className="wordmark-block__tag">v0.2 · Fraunces & JetBrains Mono</div>
+      </div>
     </>
   )
 }

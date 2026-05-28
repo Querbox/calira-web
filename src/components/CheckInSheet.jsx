@@ -1,9 +1,14 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { PAIN_TYPES, FUNCTIONAL_LEVELS, TIME_SLOTS, painColor, painLabel, slotForHour } from '../lib/pain'
 import { actions } from '../lib/store'
+import { useSwipe, useDragDownToDismiss } from '../lib/useSwipe'
+import Icon from './Icon'
+
+const SLOT_ICON = { morning: 'sun', midday: 'cloud', evening: 'moon' }
 
 export default function CheckInSheet({ defaultSlot, onClose }) {
   const initialSlot = defaultSlot || slotForHour(new Date().getHours())
+  const slotMeta = TIME_SLOTS.find((s) => s.id === initialSlot)
   const [step, setStep] = useState(0)
   const [painLevel, setPainLevel] = useState(3)
   const [type, setType] = useState('throbbing')
@@ -11,6 +16,28 @@ export default function CheckInSheet({ defaultSlot, onClose }) {
   const [stress, setStress] = useState(3)
   const [neck, setNeck] = useState(3)
   const [notes, setNotes] = useState('')
+
+  const sheetRef = useRef(null)
+  const stepCount = 4
+
+  useDragDownToDismiss(sheetRef, {
+    onDrag: (dy) => {
+      if (sheetRef.current) sheetRef.current.style.transform = `translateY(${dy}px)`
+    },
+    onRelease: () => {
+      const el = sheetRef.current
+      if (!el) return
+      const m = new DOMMatrix(getComputedStyle(el).transform)
+      el.style.transform = ''
+      if (m.m42 > 120) onClose()
+    },
+  })
+
+  useSwipe(sheetRef, {
+    onLeft: () => setStep((s) => Math.min(s + 1, stepCount - 1)),
+    onRight: () => setStep((s) => Math.max(s - 1, 0)),
+    threshold: 70,
+  })
 
   function submit() {
     actions.addCheckIn({
@@ -25,14 +52,16 @@ export default function CheckInSheet({ defaultSlot, onClose }) {
     onClose()
   }
 
-  const stepCount = 4
-
   return (
     <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet" onClick={(e) => e.stopPropagation()}>
+      <div className="sheet" ref={sheetRef} onClick={(e) => e.stopPropagation()}>
+        <div className="sheet__grabber" />
+
         <div className="sheet__head">
           <div>
-            <div className="sheet__eyebrow">{TIME_SLOTS.find((s) => s.id === initialSlot)?.label} · Check-in</div>
+            <div className="sheet__eyebrow">
+              <Icon name={SLOT_ICON[initialSlot]} size={12} /> {slotMeta?.label} · Check-in
+            </div>
             <h2 className="sheet__title">Wie geht es <em>gerade?</em></h2>
           </div>
           <button className="sheet__close" onClick={onClose} aria-label="Schließen">×</button>
@@ -51,12 +80,12 @@ export default function CheckInSheet({ defaultSlot, onClose }) {
               <div className="dial__caption">{painLabel(painLevel)}</div>
             </div>
             <input
-              type="range"
-              min={0} max={10}
+              type="range" min={0} max={10}
               value={painLevel}
               onChange={(e) => setPainLevel(Number(e.target.value))}
               className="slider"
               style={{ '--fill': `${painLevel * 10}%` }}
+              aria-label="Schmerzlevel"
             />
             <div className="slider-scale">
               <span>0 — keine</span><span>5</span><span>sehr stark — 10</span>
@@ -105,14 +134,22 @@ export default function CheckInSheet({ defaultSlot, onClose }) {
           </div>
         )}
 
+        <div className="sheet__hint">wischen zum Wechseln der Schritte</div>
+
         <div className="sheet__actions">
           {step > 0 ? (
-            <button className="btn btn-ghost" onClick={() => setStep(step - 1)}>← zurück</button>
+            <button className="btn btn-ghost" onClick={() => setStep(step - 1)}>
+              <Icon name="arrow" size={14} style={{ transform: 'rotate(180deg)' }} /> zurück
+            </button>
           ) : <span />}
           {step < stepCount - 1 ? (
-            <button className="btn btn-primary" onClick={() => setStep(step + 1)}>weiter →</button>
+            <button className="btn btn-primary" onClick={() => setStep(step + 1)}>
+              weiter <Icon name="arrow" size={14} />
+            </button>
           ) : (
-            <button className="btn btn-primary" onClick={submit}>eintragen ✓</button>
+            <button className="btn btn-primary" onClick={submit}>
+              eintragen <Icon name="check" size={14} />
+            </button>
           )}
         </div>
       </div>
@@ -133,6 +170,7 @@ function SliderField({ label, value, onChange }) {
         onChange={(e) => onChange(Number(e.target.value))}
         className="slider"
         style={{ '--fill': `${value * 10}%` }}
+        aria-label={label}
       />
     </div>
   )

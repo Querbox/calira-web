@@ -2,20 +2,21 @@ import { useRef, useState } from 'react'
 import { actions } from '../lib/store'
 import { useDragDownToDismiss } from '../lib/useSwipe'
 import Icon from './Icon'
+import TimePicker from './TimePicker'
 
 const COMMON = ['Ibuprofen 400', 'Paracetamol 500', 'Sumatriptan 50', 'ASS 500', 'Naproxen 500']
 const EFFECTS = ['gut', 'mäßig', 'kein Effekt', 'zu früh']
 
-export default function MedicationSheet({ onClose }) {
-  const [name, setName] = useState('')
-  const [dosage, setDosage] = useState('1 Tablette')
-  const [effect, setEffect] = useState('zu früh')
+export default function MedicationSheet({ existing, onClose }) {
+  const isEdit = !!existing
+  const [name, setName] = useState(existing?.medicationName || '')
+  const [dosage, setDosage] = useState(existing?.dosage || '1 Tablette')
+  const [effect, setEffect] = useState(existing?.perceivedEffect || 'zu früh')
+  const [timestamp, setTimestamp] = useState(existing?.timestamp ?? Date.now())
   const sheetRef = useRef(null)
 
   useDragDownToDismiss(sheetRef, {
-    onDrag: (dy) => {
-      if (sheetRef.current) sheetRef.current.style.transform = `translateY(${dy}px)`
-    },
+    onDrag: (dy) => { if (sheetRef.current) sheetRef.current.style.transform = `translateY(${dy}px)` },
     onRelease: () => {
       const el = sheetRef.current
       if (!el) return
@@ -27,8 +28,18 @@ export default function MedicationSheet({ onClose }) {
 
   function submit() {
     if (!name.trim()) return
-    actions.addMedication({ medicationName: name.trim(), dosage, perceivedEffect: effect, isAcute: true })
+    const payload = { medicationName: name.trim(), dosage, perceivedEffect: effect, isAcute: true, timestamp }
+    if (isEdit) actions.updateMedication(existing.id, payload)
+    else actions.addMedication(payload)
     onClose()
+  }
+
+  function del() {
+    if (!isEdit) return
+    if (confirm('Dieses Medikament löschen?')) {
+      actions.remove('medications', existing.id)
+      onClose()
+    }
   }
 
   return (
@@ -39,9 +50,11 @@ export default function MedicationSheet({ onClose }) {
         <div className="sheet__head">
           <div>
             <div className="sheet__eyebrow">
-              <Icon name="pill" size={12} /> Medikament
+              <Icon name="pill" size={12} /> Medikament {isEdit && '· bearbeiten'}
             </div>
-            <h2 className="sheet__title">Was hast du <em>genommen?</em></h2>
+            <h2 className="sheet__title">
+              {isEdit ? <>Eintrag <em>anpassen.</em></> : <>Was hast du <em>genommen?</em></>}
+            </h2>
           </div>
           <button className="sheet__close" onClick={onClose} aria-label="Schließen">×</button>
         </div>
@@ -66,12 +79,20 @@ export default function MedicationSheet({ onClose }) {
               <button key={e} className={`chip ${effect === e ? 'is-active' : ''}`} onClick={() => setEffect(e)}>{e}</button>
             ))}
           </div>
+
+          <TimePicker timestamp={timestamp} onChange={setTimestamp} />
+
+          {isEdit && (
+            <button className="btn btn-danger btn-block" onClick={del}>
+              <Icon name="trash" size={14} /> Diesen Eintrag löschen
+            </button>
+          )}
         </div>
 
         <div className="sheet__actions">
           <button className="btn btn-ghost" onClick={onClose}>abbrechen</button>
-          <button className="btn btn-primary" onClick={submit} disabled={!name.trim()}>
-            eintragen <Icon name="check" size={14} />
+          <button className="btn btn-accent" onClick={submit} disabled={!name.trim()}>
+            <Icon name="check" size={14} /> {isEdit ? 'speichern' : 'eintragen'}
           </button>
         </div>
       </div>

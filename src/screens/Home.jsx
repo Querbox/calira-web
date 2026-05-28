@@ -8,6 +8,7 @@ import MedicationSheet from '../components/MedicationSheet'
 import FlareSheet, { EndFlareSheet } from '../components/FlareSheet'
 import PainDotScale from '../components/PainDotScale'
 import Icon from '../components/Icon'
+import { monthlyMedUsage } from '../lib/insights'
 
 const SLOT_META = {
   morning: { icon: 'sun',   tint: 'morning' },
@@ -19,6 +20,7 @@ export default function Home() {
   const data = useData()
   const [sheet, setSheet] = useState(null)
   const [defaultSlot, setDefaultSlot] = useState(null)
+  const [editing, setEditing] = useState(null) // { kind: 'checkIn'|'med', entry }
 
   const key = todayKey()
   const today = data.checkIns.filter((c) => dayKeyOf(c.timestamp) === key)
@@ -35,9 +37,22 @@ export default function Home() {
   const greeting = getGreeting(now.getHours())
 
   function openCheckIn(slot) {
-    setDefaultSlot(slot)
-    setSheet('checkin')
+    const existing = today.find((c) => c.timeSlot === slot)
+    if (existing) {
+      setEditing({ kind: 'checkIn', entry: existing })
+      setSheet('checkin-edit')
+    } else {
+      setDefaultSlot(slot)
+      setSheet('checkin')
+    }
   }
+
+  function openMedication(med) {
+    setEditing({ kind: 'med', entry: med })
+    setSheet('med-edit')
+  }
+
+  const medUsage = monthlyMedUsage(data.medications)
 
   return (
     <>
@@ -57,6 +72,25 @@ export default function Home() {
           onEnd={() => setSheet('end-flare')}
           onAdjust={(delta) => actions.adjustFlareIntensity(activeFlare.id, delta)}
         />
+      )}
+
+      {medUsage.level !== 'ok' && (
+        <div className={`med-warn med-warn--${medUsage.level}`}>
+          <div className="med-warn__icon"><Icon name="pill" size={16} /></div>
+          <div>
+            <div className="med-warn__title">
+              {medUsage.level === 'high'
+                ? 'Medikamenten-Übergebrauch'
+                : 'Erhöhter Medikamenten-Bedarf'}
+            </div>
+            <div className="med-warn__sub">
+              {medUsage.count} Tage mit Akut-Medi diesen Monat.{' '}
+              {medUsage.level === 'high'
+                ? 'Über 15 Tage erhöht das Risiko für medikamenten­induzierten Kopfschmerz — bitte mit Ärzt*in besprechen.'
+                : 'Ab ~10 Tagen pro Monat empfehlen Leitlinien eine ärztliche Rücksprache.'}
+            </div>
+          </div>
+        </div>
       )}
 
       <div className="card hero-card">
@@ -148,15 +182,17 @@ export default function Home() {
           </div>
           <ul className="entries">
             {meds.map((m) => (
-              <li key={m.id} className="entry">
-                <span className="entry__time">
-                  {new Date(m.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-                </span>
-                <div>
-                  <div className="entry__title">{m.medicationName}</div>
-                  <div className="entry__meta">{m.dosage} · Wirkung: {m.perceivedEffect}</div>
-                </div>
-                <span />
+              <li key={m.id}>
+                <button className="entry entry--button" onClick={() => openMedication(m)}>
+                  <span className="entry__time">
+                    {new Date(m.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <div>
+                    <div className="entry__title">{m.medicationName}</div>
+                    <div className="entry__meta">{m.dosage} · Wirkung: {m.perceivedEffect}</div>
+                  </div>
+                  <Icon name="arrow" size={14} className="entry__chev" />
+                </button>
               </li>
             ))}
           </ul>
@@ -164,7 +200,13 @@ export default function Home() {
       )}
 
       {sheet === 'checkin' && <CheckInSheet defaultSlot={defaultSlot} onClose={() => setSheet(null)} />}
+      {sheet === 'checkin-edit' && editing?.kind === 'checkIn' && (
+        <CheckInSheet existing={editing.entry} onClose={() => { setSheet(null); setEditing(null) }} />
+      )}
       {sheet === 'med' && <MedicationSheet onClose={() => setSheet(null)} />}
+      {sheet === 'med-edit' && editing?.kind === 'med' && (
+        <MedicationSheet existing={editing.entry} onClose={() => { setSheet(null); setEditing(null) }} />
+      )}
       {sheet === 'flare' && <FlareSheet onClose={() => setSheet(null)} />}
       {sheet === 'end-flare' && activeFlare && (
         <EndFlareSheet

@@ -58,6 +58,24 @@ export const actions = {
   remove(kind, id) {
     set((s) => ({ ...s, [kind]: s[kind].filter((x) => x.id !== id) }))
   },
+  updateCheckIn(id, patch) {
+    set((s) => ({
+      ...s,
+      checkIns: s.checkIns.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    }))
+  },
+  updateMedication(id, patch) {
+    set((s) => ({
+      ...s,
+      medications: s.medications.map((m) => (m.id === id ? { ...m, ...patch } : m)),
+    }))
+  },
+  updateFlare(id, patch) {
+    set((s) => ({
+      ...s,
+      flares: s.flares.map((f) => (f.id === id ? { ...f, ...patch } : f)),
+    }))
+  },
   reset() {
     set((s) => ({ checkIns: [], medications: [], flares: [], notes: {}, name: s.name }))
   },

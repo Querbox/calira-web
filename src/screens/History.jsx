@@ -4,7 +4,10 @@ import { useData } from '../lib/store'
 import { painColor, painLabel, painTypeLabel } from '../lib/pain'
 import { useSwipe, useDragDownToDismiss } from '../lib/useSwipe'
 import DailyTimeline from '../components/DailyTimeline'
+import CheckInSheet from '../components/CheckInSheet'
+import MedicationSheet from '../components/MedicationSheet'
 import Icon from '../components/Icon'
+import { topTriggers, monthlyMedUsage, monthLabel } from '../lib/insights'
 
 export default function History() {
   const data = useData()
@@ -39,6 +42,8 @@ export default function History() {
 
   const dayList = [...days].reverse().filter((d) => d.checkIns.length || d.meds.length || d.flares.length)
   const openDay = openDayKey ? days.find((d) => d.key === openDayKey) : null
+  const triggers = topTriggers(data.flares, 30)
+  const medUsage = monthlyMedUsage(data.medications)
 
   return (
     <>
@@ -115,6 +120,59 @@ export default function History() {
         </ul>
       </div>
 
+      {triggers.length > 0 && (
+        <div className="card">
+          <div className="section__head" style={{ padding: '0 0 12px' }}>
+            <div className="section__title">Häufigste Auslöser</div>
+            <div className="section__meta">letzte 30 Tage</div>
+          </div>
+          <div className="trigger-list">
+            {triggers.slice(0, 5).map((t) => {
+              const pct = (t.count / triggers[0].count) * 100
+              return (
+                <div key={t.trigger} className="trigger-row">
+                  <div className="trigger-row__label">{t.trigger}</div>
+                  <div className="trigger-row__bar">
+                    <div className="trigger-row__bar-fill" style={{ width: `${pct}%` }} />
+                  </div>
+                  <div className="trigger-row__count">{t.count}×</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="card">
+        <div className="section__head" style={{ padding: '0 0 12px' }}>
+          <div className="section__title">Akut-Medikamente</div>
+          <div className="section__meta">{monthLabel()}</div>
+        </div>
+        <div className="med-meter">
+          <div className="med-meter__num" style={{ color: medUsage.level === 'high' ? 'var(--pain-7)' : medUsage.level === 'warn' ? 'var(--pain-5)' : 'var(--ink)' }}>
+            {medUsage.count}
+            <span className="med-meter__limit">/ {medUsage.limit} Tage</span>
+          </div>
+          <div className="med-meter__bar">
+            <div
+              className="med-meter__bar-fill"
+              style={{
+                width: `${Math.min(100, (medUsage.count / 15) * 100)}%`,
+                background:
+                  medUsage.level === 'high' ? 'var(--pain-7)' :
+                  medUsage.level === 'warn' ? 'var(--pain-5)' : 'var(--pain-1)',
+              }}
+            />
+            <div className="med-meter__bar-tick" style={{ left: `${(10 / 15) * 100}%` }} title="Empfehlungsgrenze" />
+          </div>
+          <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+            Bei chronischen Kopfschmerzen empfehlen Leitlinien max. <em>10 Tage</em> pro Monat
+            mit Akut-Medikamenten — darüber steigt das Risiko für medikamenten­induzierten
+            Kopfschmerz.
+          </p>
+        </div>
+      </div>
+
       {openDay && (
         <DayDetail
           day={openDay}
@@ -134,6 +192,7 @@ export default function History() {
 
 function DayDetail({ day, data, dayList, onNavigate, onClose }) {
   const sheetRef = useRef(null)
+  const [editing, setEditing] = useState(null) // { kind, entry }
 
   useDragDownToDismiss(sheetRef, {
     onDrag: (dy) => {
@@ -188,17 +247,19 @@ function DayDetail({ day, data, dayList, onNavigate, onClose }) {
               <div className="field-label">Check-ins</div>
               <ul className="entries">
                 {day.checkIns.map((c) => (
-                  <li key={c.id} className="entry">
-                    <span className="entry__time">
-                      {new Date(c.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    <div>
-                      <div className="entry__title" style={{ color: painColor(c.painLevel) }}>
-                        {painLabel(c.painLevel)}, {painTypeLabel(c.dominantType)}
+                  <li key={c.id}>
+                    <button className="entry entry--button" onClick={() => setEditing({ kind: 'checkIn', entry: c })}>
+                      <span className="entry__time">
+                        {new Date(c.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <div>
+                        <div className="entry__title" style={{ color: painColor(c.painLevel) }}>
+                          {painLabel(c.painLevel)}, {painTypeLabel(c.dominantType)}
+                        </div>
+                        <div className="entry__meta">Stress {c.stressLevel}/10 · Nacken {c.neckTension}/10</div>
                       </div>
-                      <div className="entry__meta">Stress {c.stressLevel}/10 · Nacken {c.neckTension}/10</div>
-                    </div>
-                    <span className="entry__num" style={{ color: painColor(c.painLevel) }}>{c.painLevel}</span>
+                      <span className="entry__num" style={{ color: painColor(c.painLevel) }}>{c.painLevel}</span>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -210,19 +271,28 @@ function DayDetail({ day, data, dayList, onNavigate, onClose }) {
               <div className="field-label">Medikamente</div>
               <ul className="entries">
                 {day.meds.map((m) => (
-                  <li key={m.id} className="entry">
-                    <span className="entry__time">
-                      {new Date(m.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    <div>
-                      <div className="entry__title">{m.medicationName}</div>
-                      <div className="entry__meta">{m.dosage} · Wirkung: {m.perceivedEffect}</div>
-                    </div>
-                    <span />
+                  <li key={m.id}>
+                    <button className="entry entry--button" onClick={() => setEditing({ kind: 'med', entry: m })}>
+                      <span className="entry__time">
+                        {new Date(m.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <div>
+                        <div className="entry__title">{m.medicationName}</div>
+                        <div className="entry__meta">{m.dosage} · Wirkung: {m.perceivedEffect}</div>
+                      </div>
+                      <Icon name="arrow" size={14} />
+                    </button>
                   </li>
                 ))}
               </ul>
             </>
+          )}
+
+          {editing?.kind === 'checkIn' && (
+            <CheckInSheet existing={editing.entry} onClose={() => setEditing(null)} />
+          )}
+          {editing?.kind === 'med' && (
+            <MedicationSheet existing={editing.entry} onClose={() => setEditing(null)} />
           )}
 
           <div className="sheet__hint">

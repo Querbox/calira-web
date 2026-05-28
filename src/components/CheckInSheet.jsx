@@ -3,27 +3,29 @@ import { PAIN_TYPES, FUNCTIONAL_LEVELS, TIME_SLOTS, painColor, painLabel, slotFo
 import { actions } from '../lib/store'
 import { useSwipe, useDragDownToDismiss } from '../lib/useSwipe'
 import Icon from './Icon'
+import TimePicker from './TimePicker'
 
 const SLOT_ICON = { morning: 'sun', midday: 'cloud', evening: 'moon' }
 
-export default function CheckInSheet({ defaultSlot, onClose }) {
-  const initialSlot = defaultSlot || slotForHour(new Date().getHours())
-  const slotMeta = TIME_SLOTS.find((s) => s.id === initialSlot)
+export default function CheckInSheet({ defaultSlot, existing, onClose }) {
+  const isEdit = !!existing
   const [step, setStep] = useState(0)
-  const [painLevel, setPainLevel] = useState(3)
-  const [type, setType] = useState('throbbing')
-  const [functional, setFunctional] = useState('unaffected')
-  const [stress, setStress] = useState(3)
-  const [neck, setNeck] = useState(3)
-  const [notes, setNotes] = useState('')
+  const [timestamp, setTimestamp] = useState(existing?.timestamp ?? Date.now())
+  const [painLevel, setPainLevel] = useState(existing?.painLevel ?? 3)
+  const [type, setType] = useState(existing?.dominantType ?? 'throbbing')
+  const [functional, setFunctional] = useState(existing?.functionalLevel ?? 'unaffected')
+  const [stress, setStress] = useState(existing?.stressLevel ?? 3)
+  const [neck, setNeck] = useState(existing?.neckTension ?? 3)
+  const [notes, setNotes] = useState(existing?.notes ?? '')
+
+  const slotId = existing?.timeSlot || defaultSlot || slotForHour(new Date(timestamp).getHours())
+  const slotMeta = TIME_SLOTS.find((s) => s.id === slotId)
 
   const sheetRef = useRef(null)
   const stepCount = 4
 
   useDragDownToDismiss(sheetRef, {
-    onDrag: (dy) => {
-      if (sheetRef.current) sheetRef.current.style.transform = `translateY(${dy}px)`
-    },
+    onDrag: (dy) => { if (sheetRef.current) sheetRef.current.style.transform = `translateY(${dy}px)` },
     onRelease: () => {
       const el = sheetRef.current
       if (!el) return
@@ -40,16 +42,27 @@ export default function CheckInSheet({ defaultSlot, onClose }) {
   })
 
   function submit() {
-    actions.addCheckIn({
-      timeSlot: initialSlot,
+    const payload = {
+      timeSlot: slotId,
       painLevel,
       dominantType: type,
       stressLevel: stress,
       neckTension: neck,
       functionalLevel: functional,
       notes,
-    })
+      timestamp,
+    }
+    if (isEdit) actions.updateCheckIn(existing.id, payload)
+    else actions.addCheckIn(payload)
     onClose()
+  }
+
+  function del() {
+    if (!isEdit) return
+    if (confirm('Diesen Check-in löschen?')) {
+      actions.remove('checkIns', existing.id)
+      onClose()
+    }
   }
 
   return (
@@ -60,9 +73,11 @@ export default function CheckInSheet({ defaultSlot, onClose }) {
         <div className="sheet__head">
           <div>
             <div className="sheet__eyebrow">
-              <Icon name={SLOT_ICON[initialSlot]} size={12} /> {slotMeta?.label} · Check-in
+              <Icon name={SLOT_ICON[slotId]} size={12} /> {slotMeta?.label} · {isEdit ? 'bearbeiten' : 'Check-in'}
             </div>
-            <h2 className="sheet__title">Wie geht es <em>gerade?</em></h2>
+            <h2 className="sheet__title">
+              {isEdit ? <>Eintrag <em>anpassen.</em></> : <>Wie geht es <em>gerade?</em></>}
+            </h2>
           </div>
           <button className="sheet__close" onClick={onClose} aria-label="Schließen">×</button>
         </div>
@@ -90,6 +105,7 @@ export default function CheckInSheet({ defaultSlot, onClose }) {
             <div className="slider-scale">
               <span>0 — keine</span><span>5</span><span>sehr stark — 10</span>
             </div>
+            <TimePicker timestamp={timestamp} onChange={setTimestamp} />
           </div>
         )}
 
@@ -131,6 +147,11 @@ export default function CheckInSheet({ defaultSlot, onClose }) {
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Auslöser, Wetter, besondere Umstände…"
             />
+            {isEdit && (
+              <button className="btn btn-danger btn-block" onClick={del} style={{ marginTop: 12 }}>
+                <Icon name="trash" size={14} /> Diesen Eintrag löschen
+              </button>
+            )}
           </div>
         )}
 
@@ -147,8 +168,8 @@ export default function CheckInSheet({ defaultSlot, onClose }) {
               weiter <Icon name="arrow" size={14} />
             </button>
           ) : (
-            <button className="btn btn-primary" onClick={submit}>
-              eintragen <Icon name="check" size={14} />
+            <button className="btn btn-accent" onClick={submit}>
+              <Icon name="check" size={14} /> {isEdit ? 'speichern' : 'eintragen'}
             </button>
           )}
         </div>

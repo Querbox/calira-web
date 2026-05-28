@@ -545,6 +545,143 @@
   margin-top: 12px;
 }
 
+/* ─── Med-overuse warning banner ───────────────────────────── */
+.med-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+  border-left: 3px solid var(--pain-5);
+}
+.med-warn--high { border-left-color: var(--pain-7); }
+.med-warn__icon {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(213, 146, 96, 0.14);
+  color: var(--pain-5);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.med-warn--high .med-warn__icon { background: rgba(196, 101, 81, 0.14); color: var(--pain-7); }
+.med-warn__title {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.med-warn--high .med-warn__title { color: var(--pain-7); }
+.med-warn__sub {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+
+/* ─── Time picker ──────────────────────────────────────────── */
+.time-picker { display: flex; flex-direction: column; gap: 8px; }
+.time-picker__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.time-picker__current {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-faint);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ─── Trigger insights ─────────────────────────────────────── */
+.trigger-list { display: flex; flex-direction: column; gap: 10px; }
+.trigger-row {
+  display: grid;
+  grid-template-columns: 92px 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+.trigger-row__label {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.trigger-row__bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+.trigger-row__bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--clay-soft), var(--clay));
+  border-radius: 4px;
+  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.trigger-row__count {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Med usage meter ──────────────────────────────────────── */
+.med-meter { display: flex; flex-direction: column; gap: 10px; }
+.med-meter__num {
+  font-family: var(--serif);
+  font-size: 38px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variation-settings: 'opsz' 144, 'SOFT' 30;
+  font-variant-numeric: lining-nums;
+}
+.med-meter__limit {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  margin-left: 8px;
+  letter-spacing: 0;
+}
+.med-meter__bar {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-soft);
+  overflow: visible;
+}
+.med-meter__bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s;
+}
+.med-meter__bar-tick {
+  position: absolute;
+  top: -3px;
+  width: 1.5px;
+  height: 14px;
+  background: var(--ink-soft);
+  transform: translateX(-50%);
+}
+.med-meter__bar-tick::after {
+  content: '10';
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--ink-faint);
+}
+
 /* ─── Outlook (forecast above timeline) ────────────────────── */
 .outlook {
   display: flex;

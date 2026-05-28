@@ -45,6 +45,16 @@ export const actions = {
       flares: s.flares.map((f) => (f.id === id ? { ...f, endTime: Date.now(), peakIntensity } : f)),
     }))
   },
+  adjustFlareIntensity(id, delta) {
+    set((s) => ({
+      ...s,
+      flares: s.flares.map((f) =>
+        f.id === id
+          ? { ...f, peakIntensity: Math.max(1, Math.min(10, (f.peakIntensity || 5) + delta)) }
+          : f
+      ),
+    }))
+  },
   remove(kind, id) {
     set((s) => ({ ...s, [kind]: s[kind].filter((x) => x.id !== id) }))
   },

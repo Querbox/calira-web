@@ -5,6 +5,7 @@ import { useData, actions } from '../lib/store'
 import DailyTimeline from '../components/DailyTimeline'
 import CheckInSheet from '../components/CheckInSheet'
 import MedicationSheet from '../components/MedicationSheet'
+import FlareSheet, { EndFlareSheet } from '../components/FlareSheet'
 import PainDotScale from '../components/PainDotScale'
 import Icon from '../components/Icon'
 
@@ -51,26 +52,11 @@ export default function Home() {
       </header>
 
       {activeFlare && (
-        <div className="flare">
-          <div className="flare__head">
-            <div className="flare__icon"><Icon name="bolt" size={18} /></div>
-            <div>
-              <div className="flare__label">Ein Schub läuft</div>
-              <div className="flare__time">
-                seit {new Date(activeFlare.startTime).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-              </div>
-            </div>
-          </div>
-          <button
-            className="btn btn-soft"
-            onClick={() => {
-              const peak = Math.max(...today.map((c) => c.painLevel), activeFlare.peakIntensity || 5)
-              actions.endFlare(activeFlare.id, peak)
-            }}
-          >
-            beenden
-          </button>
-        </div>
+        <FlareCard
+          flare={activeFlare}
+          onEnd={() => setSheet('end-flare')}
+          onAdjust={(delta) => actions.adjustFlareIntensity(activeFlare.id, delta)}
+        />
       )}
 
       <div className="card hero-card">
@@ -141,15 +127,19 @@ export default function Home() {
         <button className="btn btn-soft" onClick={() => setSheet('med')}>
           <Icon name="pill" size={16} /> Medikament
         </button>
-        {!activeFlare ? (
-          <button
-            className="btn btn-accent"
-            onClick={() => actions.addFlare({ peakIntensity: 5, quality: 'akut' })}
-          >
+        {!activeFlare && (
+          <button className="btn btn-accent" onClick={() => setSheet('flare')}>
             <Icon name="bolt" size={16} /> Schub starten
           </button>
-        ) : <span />}
+        )}
       </div>
+
+      {!activeFlare && (
+        <p className="muted" style={{ fontSize: 12, padding: '0 6px', textAlign: 'center' }}>
+          <em>Tipp:</em> "Schub starten" markiert einen akuten Schmerz-Schub mit Start­zeit
+          und Auslöser — du beendest ihn später mit der erreichten Spitze.
+        </p>
+      )}
 
       {meds.length > 0 && (
         <div className="card">
@@ -175,7 +165,57 @@ export default function Home() {
 
       {sheet === 'checkin' && <CheckInSheet defaultSlot={defaultSlot} onClose={() => setSheet(null)} />}
       {sheet === 'med' && <MedicationSheet onClose={() => setSheet(null)} />}
+      {sheet === 'flare' && <FlareSheet onClose={() => setSheet(null)} />}
+      {sheet === 'end-flare' && activeFlare && (
+        <EndFlareSheet
+          flare={activeFlare}
+          suggestedPeak={Math.max(activeFlare.peakIntensity || 5, ...today.map((c) => c.painLevel), 0)}
+          onClose={() => setSheet(null)}
+        />
+      )}
     </>
+  )
+}
+
+function FlareCard({ flare, onEnd, onAdjust }) {
+  const start = new Date(flare.startTime)
+  const now = new Date()
+  const minutes = Math.max(1, Math.round((now - start) / 60000))
+  const durationLabel = minutes >= 60
+    ? `${Math.floor(minutes / 60)} h ${minutes % 60} min`
+    : `${minutes} min`
+  const intensity = flare.peakIntensity || 5
+  return (
+    <div className="card flare-card">
+      <div className="flare-card__head">
+        <div className="flare-card__icon">
+          <Icon name="bolt" size={18} />
+        </div>
+        <div>
+          <div className="flare-card__title">Schub läuft</div>
+          <div className="flare-card__sub">
+            seit {start.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} · {durationLabel}
+          </div>
+        </div>
+        <button className="btn btn-soft flare-card__end" onClick={onEnd}>
+          <Icon name="check" size={14} /> beenden
+        </button>
+      </div>
+      <div className="flare-card__intensity">
+        <div className="flare-card__intensity-label">aktuelle Intensität</div>
+        <div className="flare-card__stepper">
+          <button onClick={() => onAdjust(-1)} aria-label="weniger" disabled={intensity <= 1}>−</button>
+          <span className="flare-card__intensity-num" style={{ color: painColor(intensity) }}>{intensity}</span>
+          <button onClick={() => onAdjust(+1)} aria-label="mehr" disabled={intensity >= 10}>+</button>
+        </div>
+      </div>
+      {(flare.trigger || flare.region) && (
+        <div className="flare-card__tags">
+          {flare.trigger && <span className="pill">Auslöser: {flare.trigger}</span>}
+          {flare.region && <span className="pill">{flare.region}</span>}
+        </div>
+      )}
+    </div>
   )
 }
 

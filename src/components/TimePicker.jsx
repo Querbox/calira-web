@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { slotForTimestamp, slotMeta as getSlotMeta } from '../lib/pain'
 import Icon from './Icon'
 
 const PRESETS = [
@@ -36,12 +37,14 @@ export default function TimePicker({ timestamp, onChange }) {
     onChange(d.getTime())
   }
 
+  const currentSlot = getSlotMeta(slotForTimestamp(timestamp))
+
   return (
     <div className="time-picker">
       <div className="time-picker__head">
         <span className="field-label">Zeitpunkt</span>
         <span className="time-picker__current">
-          <Icon name="clock" size={12} /> {timeStr}
+          <Icon name="clock" size={12} /> {timeStr} · {currentSlot?.label}
         </span>
       </div>
       <div className="chips">

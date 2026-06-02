@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { PAIN_TYPES, FUNCTIONAL_LEVELS, TIME_SLOTS, painColor, painLabel, slotForHour } from '../lib/pain'
+import { PAIN_TYPES, FUNCTIONAL_LEVELS, TIME_SLOTS, painColor, painLabel, slotForHour, slotForTimestamp, slotMeta } from '../lib/pain'
 import { actions } from '../lib/store'
 import { useSwipe, useDragDownToDismiss } from '../lib/useSwipe'
 import Icon from './Icon'
@@ -18,8 +18,10 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
   const [neck, setNeck] = useState(existing?.neckTension ?? 3)
   const [notes, setNotes] = useState(existing?.notes ?? '')
 
-  const slotId = existing?.timeSlot || defaultSlot || slotForHour(new Date(timestamp).getHours())
-  const slotMeta = TIME_SLOTS.find((s) => s.id === slotId)
+  // Slot auto-adjusts to the selected timestamp
+  const autoSlot = slotForTimestamp(timestamp)
+  const slotId = autoSlot
+  const currentSlotMeta = slotMeta(slotId)
 
   const sheetRef = useRef(null)
   const stepCount = 4
@@ -73,7 +75,8 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
         <div className="sheet__head">
           <div>
             <div className="sheet__eyebrow">
-              <Icon name={SLOT_ICON[slotId]} size={12} /> {slotMeta?.label} · {isEdit ? 'bearbeiten' : 'Check-in'}
+              <Icon name={SLOT_ICON[slotId]} size={12} />
+              {currentSlotMeta?.label} ({currentSlotMeta?.desc}) · {isEdit ? 'bearbeiten' : 'Check-in'}
             </div>
             <h2 className="sheet__title">
               {isEdit ? <>Eintrag <em>anpassen.</em></> : <>Wie geht es <em>gerade?</em></>}

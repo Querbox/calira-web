@@ -14,15 +14,23 @@ export const FUNCTIONAL_LEVELS = [
 ]
 
 export const TIME_SLOTS = [
-  { id: 'morning', label: 'Morgens' },
-  { id: 'midday', label: 'Mittags' },
-  { id: 'evening', label: 'Abends' },
+  { id: 'morning', label: 'Morgens',  from: 5,  to: 12, desc: '5 – 12 Uhr' },
+  { id: 'midday',  label: 'Mittags',  from: 12, to: 18, desc: '12 – 18 Uhr' },
+  { id: 'evening', label: 'Abends',   from: 18, to: 5,  desc: '18 – 5 Uhr' },
 ]
 
 export function slotForHour(h) {
-  if (h >= 5 && h < 11) return 'morning'
-  if (h >= 11 && h < 17) return 'midday'
+  if (h >= 5 && h < 12) return 'morning'
+  if (h >= 12 && h < 18) return 'midday'
   return 'evening'
+}
+
+export function slotForTimestamp(ts) {
+  return slotForHour(new Date(ts).getHours())
+}
+
+export function slotMeta(id) {
+  return TIME_SLOTS.find((s) => s.id === id)
 }
 
 export function painColor(level) {

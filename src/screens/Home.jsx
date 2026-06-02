@@ -135,7 +135,7 @@ export default function Home() {
               <div className="slot-tile__label">{slot.label}</div>
               {entry ? (
                 <div className="slot-tile__detail">
-                  <em>{entry.painLevel}</em>/10 · {painLabel(entry.painLevel)}
+                  <em>{entry.painLevel}</em>/10 · {painTypeLabel(entry.dominantTypes || entry.dominantType)}
                 </div>
               ) : (
                 <div className="slot-tile__detail">eintragen</div>

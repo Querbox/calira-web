@@ -7,7 +7,7 @@ import DailyTimeline from '../components/DailyTimeline'
 import CheckInSheet from '../components/CheckInSheet'
 import MedicationSheet from '../components/MedicationSheet'
 import Icon from '../components/Icon'
-import { topTriggers, monthlyMedUsage, monthLabel } from '../lib/insights'
+import { topTriggers, monthlyMedUsage, monthLabel, weatherCorrelation } from '../lib/insights'
 
 export default function History() {
   const data = useData()
@@ -42,8 +42,9 @@ export default function History() {
 
   const dayList = [...days].reverse().filter((d) => d.checkIns.length || d.meds.length || d.flares.length)
   const openDay = openDayKey ? days.find((d) => d.key === openDayKey) : null
-  const triggers = topTriggers(data.flares, 30)
+  const triggers = topTriggers(data.flares, 30, data.checkIns)
   const medUsage = monthlyMedUsage(data.medications)
+  const weatherCor = weatherCorrelation(data.checkIns)
 
   return (
     <>
@@ -140,6 +141,26 @@ export default function History() {
               )
             })}
           </div>
+        </div>
+      )}
+
+      {weatherCor.total >= 5 && (
+        <div className="card">
+          <div className="section__head" style={{ padding: '0 0 12px' }}>
+            <div className="section__title"><Icon name="cloud" size={14} /> Wetter & Schmerz</div>
+            <div className="section__meta">{weatherCor.total} Datenpunkte</div>
+          </div>
+          <div className="weather-cor">
+            <CorBar label="Druckabfall" avg={weatherCor.drop.avg} count={weatherCor.drop.count} warn />
+            <CorBar label="Stabil" avg={weatherCor.stable.avg} count={weatherCor.stable.count} />
+            <CorBar label="Druckanstieg" avg={weatherCor.rise.avg} count={weatherCor.rise.count} />
+          </div>
+          <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+            Ø Schmerzlevel bei verschiedenen Luftdruck-Veränderungen (3h-Fenster).
+            {weatherCor.drop.avg != null && weatherCor.stable.avg != null && weatherCor.drop.avg > weatherCor.stable.avg + 1 && (
+              <> <em>Druckabfälle scheinen deine Schmerzen zu verstärken.</em></>
+            )}
+          </p>
         </div>
       )}
 
@@ -300,6 +321,25 @@ function DayDetail({ day, data, dayList, onNavigate, onClose }) {
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function CorBar({ label, avg, count, warn }) {
+  if (avg == null) return (
+    <div className="cor-bar">
+      <div className="cor-bar__label">{label}</div>
+      <div className="cor-bar__track"><div className="cor-bar__fill" style={{ width: 0 }} /></div>
+      <div className="cor-bar__val">—</div>
+    </div>
+  )
+  return (
+    <div className={`cor-bar ${warn && avg > 4 ? 'cor-bar--warn' : ''}`}>
+      <div className="cor-bar__label">{label}</div>
+      <div className="cor-bar__track">
+        <div className="cor-bar__fill" style={{ width: `${(avg / 10) * 100}%`, background: painColor(Math.round(avg)) }} />
+      </div>
+      <div className="cor-bar__val">Ø {avg.toFixed(1)} <span className="cor-bar__count">({count})</span></div>
     </div>
   )
 }

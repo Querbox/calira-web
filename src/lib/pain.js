@@ -53,5 +53,6 @@ export function painLabel(level) {
 }
 
 export function painTypeLabel(id) {
+  if (Array.isArray(id)) return id.map((i) => PAIN_TYPES.find((t) => t.id === i)?.label || i).join(', ') || '—'
   return PAIN_TYPES.find((t) => t.id === id)?.label || id
 }

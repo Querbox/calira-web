@@ -1400,6 +1400,153 @@
   box-shadow: var(--shadow-card);
 }
 
+/* ─── Weather card (in check-in sheet) ─────────────────────── */
+.weather-card {
+  background: var(--bg-soft);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+.weather-card--empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+.weather-card__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.weather-card__title {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.weather-card__loading { font-size: 11px; color: var(--ink-fainter); margin-left: auto; }
+.weather-card__row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.weather-card__stat { display: flex; flex-direction: column; gap: 2px; }
+.weather-card__val {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.weather-card__lbl {
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-weight: 500;
+}
+.weather-card__stat--drop-strong .weather-card__val,
+.weather-card__stat--drop .weather-card__val { color: var(--clay); }
+.weather-card__stat--rise-strong .weather-card__val,
+.weather-card__stat--rise .weather-card__val { color: var(--pain-1); }
+.weather-card__warn {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: rgba(236, 122, 90, 0.08);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--clay);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ─── Weather correlation bars (History) ───────────────────── */
+.weather-cor { display: flex; flex-direction: column; gap: 10px; }
+.cor-bar {
+  display: grid;
+  grid-template-columns: 100px 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+.cor-bar__label {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.cor-bar__track {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+.cor-bar__fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.cor-bar__val {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  min-width: 70px;
+  text-align: right;
+}
+.cor-bar__count { color: var(--ink-faint); font-weight: 450; }
+.cor-bar--warn .cor-bar__label { color: var(--clay); }
+
+/* ─── Update banner ────────────────────────────────────────── */
+.update-banner {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 18px;
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  animation: banner-slide 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes banner-slide {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+.update-banner__content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.update-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.update-banner__btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--clay);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+.update-banner__btn:active { opacity: 0.8; }
+.update-banner__dismiss {
+  width: 28px; height: 28px;
+  font-size: 18px;
+  color: var(--bg);
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ─── Wordmark ─────────────────────────────────────────────── */
 .wordmark-block {
   text-align: center;

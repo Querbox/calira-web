@@ -4,6 +4,7 @@ import Home from './screens/Home'
 import History from './screens/History'
 import Settings from './screens/Settings'
 import Icon from './components/Icon'
+import UpdateBanner from './components/UpdateBanner'
 import { usePager } from './lib/usePager'
 
 const TABS = [
@@ -69,6 +70,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <UpdateBanner />
       <div className="app__pages" ref={pagesRef}>
         <main className={`app__main ${enterDir ? `app__main--${enterDir}` : ''}`} key={tab}>
           {tab === 'home' && <Home />}

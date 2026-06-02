@@ -1,30 +1,56 @@
-import { useRef, useState } from 'react'
-import { PAIN_TYPES, FUNCTIONAL_LEVELS, TIME_SLOTS, painColor, painLabel, slotForHour, slotForTimestamp, slotMeta } from '../lib/pain'
+import { useEffect, useRef, useState } from 'react'
+import { PAIN_TYPES, FUNCTIONAL_LEVELS, TIME_SLOTS, painColor, painLabel, slotForTimestamp, slotMeta } from '../lib/pain'
 import { actions } from '../lib/store'
 import { useSwipe, useDragDownToDismiss } from '../lib/useSwipe'
+import { fetchWeather, pressureSignal } from '../lib/weather'
 import Icon from './Icon'
 import TimePicker from './TimePicker'
 
 const SLOT_ICON = { morning: 'sun', midday: 'cloud', evening: 'moon' }
+
+const TRIGGERS = [
+  'Wetter', 'Stress', 'Schlafmangel', 'Bildschirm', 'Hunger',
+  'Hormonell', 'Lärm', 'Alkohol', 'Nacken', 'Dehydriert',
+]
 
 export default function CheckInSheet({ defaultSlot, existing, onClose }) {
   const isEdit = !!existing
   const [step, setStep] = useState(0)
   const [timestamp, setTimestamp] = useState(existing?.timestamp ?? Date.now())
   const [painLevel, setPainLevel] = useState(existing?.painLevel ?? 3)
-  const [type, setType] = useState(existing?.dominantType ?? 'throbbing')
+  // Multi-select: arrays
+  const [types, setTypes] = useState(() => {
+    if (existing?.dominantTypes) return existing.dominantTypes
+    if (existing?.dominantType) return [existing.dominantType]
+    return []
+  })
+  const [triggers, setTriggers] = useState(() => {
+    if (existing?.triggers) return existing.triggers
+    return []
+  })
   const [functional, setFunctional] = useState(existing?.functionalLevel ?? 'unaffected')
   const [stress, setStress] = useState(existing?.stressLevel ?? 3)
   const [neck, setNeck] = useState(existing?.neckTension ?? 3)
   const [notes, setNotes] = useState(existing?.notes ?? '')
+  const [weather, setWeather] = useState(existing?.weather ?? null)
+  const [weatherLoading, setWeatherLoading] = useState(false)
 
-  // Slot auto-adjusts to the selected timestamp
   const autoSlot = slotForTimestamp(timestamp)
-  const slotId = autoSlot
-  const currentSlotMeta = slotMeta(slotId)
+  const currentSlotMeta = slotMeta(autoSlot)
 
   const sheetRef = useRef(null)
-  const stepCount = 4
+  const stepCount = 5 // pain, type+triggers, function, weather+notes
+
+  // Auto-fetch weather on mount (only for new check-ins)
+  useEffect(() => {
+    if (isEdit || weather) return
+    let cancelled = false
+    setWeatherLoading(true)
+    fetchWeather().then((w) => {
+      if (!cancelled && w) setWeather(w)
+    }).finally(() => { if (!cancelled) setWeatherLoading(false) })
+    return () => { cancelled = true }
+  }, [])
 
   useDragDownToDismiss(sheetRef, {
     onDrag: (dy) => { if (sheetRef.current) sheetRef.current.style.transform = `translateY(${dy}px)` },
@@ -43,16 +69,23 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
     threshold: 70,
   })
 
+  function toggleMulti(arr, setArr, val) {
+    setArr(arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val])
+  }
+
   function submit() {
     const payload = {
-      timeSlot: slotId,
+      timeSlot: autoSlot,
       painLevel,
-      dominantType: type,
+      dominantType: types[0] || 'unclear', // backward compat
+      dominantTypes: types,
+      triggers,
       stressLevel: stress,
       neckTension: neck,
       functionalLevel: functional,
       notes,
       timestamp,
+      weather,
     }
     if (isEdit) actions.updateCheckIn(existing.id, payload)
     else actions.addCheckIn(payload)
@@ -67,6 +100,8 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
     }
   }
 
+  const pressureSig = weather ? pressureSignal(weather.pressureChange3h) : null
+
   return (
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" ref={sheetRef} onClick={(e) => e.stopPropagation()}>
@@ -75,7 +110,7 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
         <div className="sheet__head">
           <div>
             <div className="sheet__eyebrow">
-              <Icon name={SLOT_ICON[slotId]} size={12} />
+              <Icon name={SLOT_ICON[autoSlot]} size={12} />
               {currentSlotMeta?.label} ({currentSlotMeta?.desc}) · {isEdit ? 'bearbeiten' : 'Check-in'}
             </div>
             <h2 className="sheet__title">
@@ -105,19 +140,21 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
               style={{ '--fill': `${painLevel * 10}%` }}
               aria-label="Schmerzlevel"
             />
-            <div className="slider-scale">
-              <span>0 — keine</span><span>5</span><span>sehr stark — 10</span>
-            </div>
+            <div className="slider-scale"><span>0 — keine</span><span>5</span><span>sehr stark — 10</span></div>
             <TimePicker timestamp={timestamp} onChange={setTimestamp} />
           </div>
         )}
 
         {step === 1 && (
           <div className="sheet__body">
-            <div className="field-label">Charakter des Schmerzes</div>
+            <div className="field-label">Charakter des Schmerzes <span style={{ color: 'var(--ink-faint)', fontWeight: 450 }}>· mehrere möglich</span></div>
             <div className="chips">
               {PAIN_TYPES.map((t) => (
-                <button key={t.id} className={`chip ${type === t.id ? 'is-active' : ''}`} onClick={() => setType(t.id)}>
+                <button
+                  key={t.id}
+                  className={`chip ${types.includes(t.id) ? 'is-active' : ''}`}
+                  onClick={() => toggleMulti(types, setTypes, t.id)}
+                >
                   {t.label}
                 </button>
               ))}
@@ -126,6 +163,23 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
         )}
 
         {step === 2 && (
+          <div className="sheet__body">
+            <div className="field-label">Vermutete Auslöser <span style={{ color: 'var(--ink-faint)', fontWeight: 450 }}>· mehrere möglich, optional</span></div>
+            <div className="chips">
+              {TRIGGERS.map((t) => (
+                <button
+                  key={t}
+                  className={`chip ${triggers.includes(t) ? 'is-active' : ''}`}
+                  onClick={() => toggleMulti(triggers, setTriggers, t)}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
           <div className="sheet__body">
             <div className="field-label">Funktionale Einschränkung</div>
             <div className="chips">
@@ -140,18 +194,55 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <div className="sheet__body">
+            {weather && (
+              <div className="weather-card">
+                <div className="weather-card__head">
+                  <Icon name="cloud" size={14} />
+                  <span className="weather-card__title">Wetter beim Check-in</span>
+                  {weatherLoading && <span className="weather-card__loading">lädt…</span>}
+                </div>
+                <div className="weather-card__row">
+                  <div className="weather-card__stat">
+                    <div className="weather-card__val">{weather.temperature}°</div>
+                    <div className="weather-card__lbl">{weather.weatherLabel}</div>
+                  </div>
+                  <div className="weather-card__stat">
+                    <div className="weather-card__val">{weather.pressure} hPa</div>
+                    <div className="weather-card__lbl">Luftdruck</div>
+                  </div>
+                  {pressureSig && (
+                    <div className={`weather-card__stat weather-card__stat--${pressureSig.level}`}>
+                      <div className="weather-card__val">{pressureSig.icon} {weather.pressureChange3h > 0 ? '+' : ''}{weather.pressureChange3h}</div>
+                      <div className="weather-card__lbl">{pressureSig.label} (3h)</div>
+                    </div>
+                  )}
+                </div>
+                {pressureSig && (pressureSig.level === 'drop-strong' || pressureSig.level === 'drop') && (
+                  <div className="weather-card__warn">
+                    <Icon name="bolt" size={12} /> Druckabfall — häufiger Migräne-Trigger
+                  </div>
+                )}
+              </div>
+            )}
+            {!weather && !weatherLoading && (
+              <div className="weather-card weather-card--empty">
+                <Icon name="cloud" size={14} />
+                <span>Kein Wetter verfügbar (Standort nicht freigegeben)</span>
+              </div>
+            )}
+
             <div className="field-label">Notiz (optional)</div>
             <textarea
               className="textarea"
-              rows={5}
+              rows={4}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Auslöser, Wetter, besondere Umstände…"
+              placeholder="Auslöser, besondere Umstände…"
             />
             {isEdit && (
-              <button className="btn btn-danger btn-block" onClick={del} style={{ marginTop: 12 }}>
+              <button className="btn btn-danger btn-block" onClick={del} style={{ marginTop: 8 }}>
                 <Icon name="trash" size={14} /> Diesen Eintrag löschen
               </button>
             )}

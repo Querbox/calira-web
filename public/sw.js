@@ -1,5 +1,5 @@
 /* Calira service worker — bumping CACHE invalidates the old shell. */
-const CACHE = 'calira-v2'
+const CACHE = 'calira-v3'
 const SHELL = [
   './',
   './index.html',

@@ -31,12 +31,17 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
       })
       .catch(() => {})
 
-    // When the controlling SW changes, refresh so the new shell is used
+    // When the controlling SW changes (user clicked "Aktualisieren"), refresh
     let refreshing = false
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (refreshing) return
       refreshing = true
       window.location.reload()
+    })
+
+    // Notify the UpdateBanner when a waiting worker is detected
+    navigator.serviceWorker.getRegistration().then((reg) => {
+      if (reg?.waiting) window.dispatchEvent(new Event('calira:update-available'))
     })
   })
 }

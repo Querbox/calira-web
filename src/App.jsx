@@ -6,6 +6,7 @@ import Settings from './screens/Settings'
 import Icon from './components/Icon'
 import UpdateBanner from './components/UpdateBanner'
 import { usePager } from './lib/usePager'
+import { useNotifications } from './hooks/useNotifications'
 
 const TABS = [
   { id: 'home', label: 'Heute', icon: 'sun' },
@@ -67,6 +68,8 @@ export default function App() {
     onRight: () => relative(-1),
     commitAt: 80,
   })
+
+  useNotifications(data)
 
   return (
     <div className="app">

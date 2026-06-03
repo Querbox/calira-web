@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useData, actions } from '../lib/store'
 import Icon from '../components/Icon'
 import PrintReport from '../components/PrintReport'
+import { getPrefs, setPrefs, permissionStatus, requestPermission, fireTest } from '../lib/notify'
 
 const THEMES = [
   { id: 'clay',  label: 'Clay',  swatch: '#ec7a5a' },
@@ -174,6 +175,8 @@ export default function Settings() {
         </div>
       </div>
 
+      <NotificationsCard />
+
       <div className="card">
         <div className="section__head" style={{ padding: '0 0 10px' }}>
           <div className="section__title">App-Update</div>
@@ -271,5 +274,146 @@ export default function Settings() {
         <div className="wordmark-block__tag">v0.3 · lokal · gestenfreundlich</div>
       </div>
     </>
+  )
+}
+
+function NotificationsCard() {
+  const [prefs, setPrefsState] = useState(getPrefs())
+  const [perm, setPerm] = useState(permissionStatus())
+  const [testFeedback, setTestFeedback] = useState(null)
+
+  useEffect(() => {
+    const onFocus = () => setPerm(permissionStatus())
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
+
+  function update(patch) {
+    const next = setPrefs(patch)
+    setPrefsState(next)
+  }
+
+  async function onEnable() {
+    if (perm === 'unsupported') return
+    if (perm !== 'granted') {
+      const res = await requestPermission()
+      setPerm(res)
+      if (res !== 'granted') return
+    }
+    update({ enabled: true })
+  }
+
+  async function onTest() {
+    const ok = await fireTest()
+    setTestFeedback(ok ? 'gesendet' : 'fehlgeschlagen')
+    setTimeout(() => setTestFeedback(null), 2500)
+  }
+
+  const supported = perm !== 'unsupported'
+  const enabled = prefs.enabled && perm === 'granted'
+
+  const CATS = [
+    { id: 'slotReminders', label: 'Check-in-Erinnerungen', desc: 'Morgens / Mittags / Abends — nur wenn noch nichts erfasst ist.' },
+    { id: 'pressureAlert', label: 'Luftdruck-Warnung', desc: 'Bei einem Druckabfall ≥ 3 hPa in den nächsten 3 Stunden.' },
+    { id: 'riskAlert',     label: 'Risiko-Vorschau',    desc: 'Wenn deine kombinierte Wahrscheinlichkeit für die nächste Stunde ≥ 65 % ist.' },
+    { id: 'flareNudge',    label: 'Schub-Nudge',         desc: 'Sanfter Hinweis, wenn ein laufender Schub seit 90 min nicht aktualisiert wurde.' },
+  ]
+
+  return (
+    <div className="card">
+      <div className="section__head" style={{ padding: '0 0 10px' }}>
+        <div className="section__title">Benachrichtigungen</div>
+        <div className="section__meta">
+          {!supported ? 'nicht verfügbar' :
+           perm === 'denied' ? 'blockiert' :
+           enabled ? 'aktiv' : 'aus'}
+        </div>
+      </div>
+
+      {!supported && (
+        <p className="muted" style={{ fontSize: 13 }}>
+          Dein Browser unterstützt keine Benachrichtigungen. Auf iOS musst du Calira erst
+          zum Home-Bildschirm hinzufügen.
+        </p>
+      )}
+
+      {supported && perm === 'denied' && (
+        <p className="muted" style={{ fontSize: 13 }}>
+          Benachrichtigungen sind in deinen Browser-Einstellungen blockiert. Du musst sie
+          dort für diese Seite manuell erlauben.
+        </p>
+      )}
+
+      {supported && perm !== 'denied' && !enabled && (
+        <>
+          <p className="muted" style={{ fontSize: 13 }}>
+            Calira meldet sich nur in <em>klugen Momenten</em> — bei fallendem Luftdruck,
+            erhöhter Wahrscheinlichkeit, oder wenn du einen Check-in vergisst.
+            Nie Streaks, nie Spam.
+          </p>
+          <button className="btn btn-accent btn-block" style={{ marginTop: 12 }} onClick={onEnable}>
+            <Icon name="spark" size={15} /> Aktivieren
+          </button>
+        </>
+      )}
+
+      {enabled && (
+        <>
+          <p className="muted" style={{ fontSize: 13 }}>
+            Aktiv solange die App geöffnet ist (oder als Home-Screen-App im Hintergrund läuft).
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+            {CATS.map((c) => (
+              <label key={c.id} className="notify-row">
+                <input
+                  type="checkbox"
+                  checked={!!prefs[c.id]}
+                  onChange={(e) => update({ [c.id]: e.target.checked })}
+                />
+                <div>
+                  <div className="notify-row__label">{c.label}</div>
+                  <div className="notify-row__desc">{c.desc}</div>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          <div className="section__head" style={{ padding: '14px 0 8px', borderTop: '1px solid var(--line)', marginTop: 14 }}>
+            <div className="section__title" style={{ fontSize: 14 }}>Ruhezeiten</div>
+            <div className="section__meta">
+              {String(prefs.quietStart).padStart(2, '0')}:00 – {String(prefs.quietEnd).padStart(2, '0')}:00
+            </div>
+          </div>
+          <div className="quiet-hours">
+            <label>
+              <span>von</span>
+              <select value={prefs.quietStart} onChange={(e) => update({ quietStart: Number(e.target.value) })}>
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i}>{String(i).padStart(2, '0')}:00</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>bis</span>
+              <select value={prefs.quietEnd} onChange={(e) => update({ quietEnd: Number(e.target.value) })}>
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i}>{String(i).padStart(2, '0')}:00</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="actions" style={{ marginTop: 14, gridTemplateColumns: '1fr 1fr' }}>
+            <button className="btn btn-soft" onClick={onTest}>
+              <Icon name="spark" size={14} /> Test {testFeedback && `· ${testFeedback}`}
+            </button>
+            <button className="btn btn-soft" onClick={() => update({ enabled: false })}>
+              <Icon name="check" size={14} /> Deaktivieren
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   )
 }

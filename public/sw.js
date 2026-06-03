@@ -1,5 +1,5 @@
 /* Calira service worker — bumping CACHE invalidates the old shell. */
-const CACHE = 'calira-v3'
+const CACHE = 'calira-v4'
 const SHELL = [
   './',
   './index.html',
@@ -26,6 +26,19 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('message', (e) => {
   if (e.data === 'skip-waiting') self.skipWaiting()
+})
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close()
+  const targetUrl = e.notification.data?.url || './'
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((all) => {
+      // Reuse an existing tab if one is already open
+      const existing = all.find((c) => c.url.includes(targetUrl))
+      if (existing) return existing.focus()
+      if (self.clients.openWindow) return self.clients.openWindow(targetUrl)
+    })
+  )
 })
 
 self.addEventListener('fetch', (e) => {

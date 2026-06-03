@@ -159,13 +159,40 @@ a { color: inherit; }
   --serif: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --sans: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
+/* Common selector list — every place we ever set font-variation-settings */
 :root[data-font="modern"] .page-header__title,
+:root[data-font="modern"] .page-header__line,
 :root[data-font="modern"] .sheet__title,
 :root[data-font="modern"] .figure__num,
 :root[data-font="modern"] .dial__num,
-:root[data-font="modern"] .stats__num {
+:root[data-font="modern"] .stats__num,
+:root[data-font="modern"] .forecast-hero__num,
+:root[data-font="modern"] .forecast-hero__pct,
+:root[data-font="modern"] .forecast-hero__peak em,
+:root[data-font="modern"] .slot-tile__num,
+:root[data-font="modern"] .day-strip__value,
+:root[data-font="modern"] .done-banner__title,
+:root[data-font="modern"] .settings-card__title,
+:root[data-font="modern"] .legal__h2 {
   font-weight: 400;
   font-variation-settings: normal;
+}
+:root[data-font="editorial"] .page-header__title,
+:root[data-font="editorial"] .page-header__line,
+:root[data-font="editorial"] .sheet__title,
+:root[data-font="editorial"] .figure__num,
+:root[data-font="editorial"] .dial__num,
+:root[data-font="editorial"] .stats__num,
+:root[data-font="editorial"] .forecast-hero__num,
+:root[data-font="editorial"] .forecast-hero__pct,
+:root[data-font="editorial"] .forecast-hero__peak em,
+:root[data-font="editorial"] .slot-tile__num,
+:root[data-font="editorial"] .day-strip__value,
+:root[data-font="editorial"] .done-banner__title,
+:root[data-font="editorial"] .settings-card__title,
+:root[data-font="editorial"] .legal__h2 {
+  /* Newsreader has an opsz axis but no SOFT — use a soft optical size */
+  font-variation-settings: 'opsz' 36;
 }
 :root[data-font="mono"] em {
   font-style: normal;
@@ -173,10 +200,19 @@ a { color: inherit; }
   font-variation-settings: normal;
 }
 :root[data-font="mono"] .page-header__title,
+:root[data-font="mono"] .page-header__line,
 :root[data-font="mono"] .sheet__title,
 :root[data-font="mono"] .figure__num,
 :root[data-font="mono"] .dial__num,
-:root[data-font="mono"] .stats__num {
+:root[data-font="mono"] .stats__num,
+:root[data-font="mono"] .forecast-hero__num,
+:root[data-font="mono"] .forecast-hero__pct,
+:root[data-font="mono"] .forecast-hero__peak em,
+:root[data-font="mono"] .slot-tile__num,
+:root[data-font="mono"] .day-strip__value,
+:root[data-font="mono"] .done-banner__title,
+:root[data-font="mono"] .settings-card__title,
+:root[data-font="mono"] .legal__h2 {
   font-variation-settings: normal;
   letter-spacing: -0.02em;
   font-weight: 500;

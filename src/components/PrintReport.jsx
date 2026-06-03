@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { dayKeyOf } from '../lib/storage'
 import { topTriggers, monthlyMedUsage, monthLabel } from '../lib/insights'
 import { painLabel, painColor } from '../lib/pain'
@@ -57,7 +58,7 @@ export default function PrintReport({ data, onClose }) {
     return { avg, max, start, days: slice }
   })
 
-  return (
+  return createPortal((
     <div className="pr">
       {/* ── Header ── */}
       <header className="pr__header">
@@ -194,7 +195,7 @@ export default function PrintReport({ data, onClose }) {
         </div>
       </footer>
     </div>
-  )
+  ), document.body)
 }
 
 function Figure({ label, value, sub, accent, warn }) {

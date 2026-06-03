@@ -74,21 +74,44 @@ export function useDragDownToDismiss(ref, { onDrag, onRelease } = {}) {
     function start(e) {
       const t = e.touches[0]
       const target = e.target
-      // Only initiate the dismiss gesture when the touch begins on a
-      // designated handle (grabber / header). Scrolling within the body
-      // therefore never triggers dismiss — even when scrollTop hits 0.
-      const handle = target.closest && target.closest('[data-sheet-handle]')
-      if (!handle) return
-      state.current = { y: t.clientY, dragging: false, dy: 0 }
+      const onHandle = !!(target.closest && target.closest('[data-sheet-handle]'))
+      state.current = {
+        y: t.clientY,
+        dy: 0,
+        dragging: false,
+        onHandle,
+        startScrollTop: el.scrollTop,
+        cancelled: false,
+      }
     }
     function move(e) {
-      if (!state.current) return
+      const s = state.current
+      if (!s || s.cancelled) return
       const t = e.touches[0]
-      const dy = t.clientY - state.current.y
+      const dy = t.clientY - s.y
+
+      // Body touches: if the sheet is scrolled away from the top,
+      // this is a scroll gesture — never a dismiss. Cancel for good.
+      if (!s.onHandle && el.scrollTop > 0) {
+        s.cancelled = true
+        return
+      }
+      // Body touches at scrollTop=0 also need the first motion to be
+      // clearly downward. If user swipes up (intending to scroll content
+      // further), abandon the drag intent.
+      if (!s.onHandle && dy < -4) {
+        s.cancelled = true
+        return
+      }
+
       if (dy < 0) return
-      if (!state.current.dragging && dy > 8) state.current.dragging = true
-      if (state.current.dragging) {
-        state.current.dy = dy
+
+      // Hysteresis: handle starts at 8px, body needs 14px (more deliberate).
+      const activate = s.onHandle ? 8 : 14
+      if (!s.dragging && dy > activate) s.dragging = true
+
+      if (s.dragging) {
+        s.dy = dy
         onDrag?.(dy)
       }
     }

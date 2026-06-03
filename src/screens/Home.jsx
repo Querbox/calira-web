@@ -1,15 +1,15 @@
-import { useState, useRef, useEffect } from 'react'
-import { TIME_SLOTS, painColor, painLabel, painTypeLabel } from '../lib/pain'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { TIME_SLOTS, painColor, painLabel, painTypeLabel, slotForHour } from '../lib/pain'
 import { todayKey, dayKeyOf } from '../lib/storage'
 import { useData, actions } from '../lib/store'
 import DailyTimeline from '../components/DailyTimeline'
 import CheckInSheet from '../components/CheckInSheet'
 import MedicationSheet from '../components/MedicationSheet'
 import FlareSheet, { EndFlareSheet } from '../components/FlareSheet'
-import PainDotScale from '../components/PainDotScale'
 import Icon from '../components/Icon'
 import { monthlyMedUsage } from '../lib/insights'
 import { fetchDayPressure } from '../lib/weather'
+import { computeHourlyRisk, combineWithWeather, summarizeCurve, riskLabel, riskColor } from '../lib/prediction'
 import { DayDetail } from './History'
 
 const SLOT_META = {
@@ -18,12 +18,17 @@ const SLOT_META = {
   evening: { icon: 'moon',  tint: 'evening' },
 }
 
+const TIP_DISMISS_KEY = 'calira:home-tip:dismissed'
+
 export default function Home() {
   const data = useData()
   const [sheet, setSheet] = useState(null)
   const [defaultSlot, setDefaultSlot] = useState(null)
-  const [editing, setEditing] = useState(null) // { kind: 'checkIn'|'med', entry }
+  const [editing, setEditing] = useState(null)
   const [dayPressure, setDayPressure] = useState(null)
+  const [tipDismissed, setTipDismissed] = useState(() => {
+    try { return Number(localStorage.getItem(TIP_DISMISS_KEY) || 0) >= 2 } catch { return false }
+  })
 
   const key = todayKey()
 
@@ -32,18 +37,41 @@ export default function Home() {
     fetchDayPressure(key).then((p) => { if (!cancelled) setDayPressure(p) })
     return () => { cancelled = true }
   }, [key])
+
   const today = data.checkIns.filter((c) => dayKeyOf(c.timestamp) === key)
   const meds = data.medications.filter((m) => dayKeyOf(m.timestamp) === key)
+  const dayFlares = data.flares.filter((f) => dayKeyOf(f.startTime) === key)
   const activeFlare = data.flares.find((f) => !f.endTime)
 
   const avg = today.length > 0
     ? Math.round((today.reduce((s, c) => s + c.painLevel, 0) / today.length) * 10) / 10
     : null
   const max = today.length ? Math.max(...today.map((c) => c.painLevel)) : null
+  const allDone = today.length >= 3
 
   const now = new Date()
   const dateLabel = now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })
   const greeting = getGreeting(now.getHours())
+  const currentSlotId = slotForHour(now.getHours())
+
+  // ── Forecast (hero) ──
+  const forecast = useMemo(() => {
+    const base = computeHourlyRisk(data.checkIns, key, now)
+    const pressureSeries = dayPressure?.pressure || null
+    let combined = null
+    let weatherOnly = false
+    if (Array.isArray(base)) {
+      combined = combineWithWeather(base, pressureSeries) || base
+    } else if (pressureSeries) {
+      combined = combineWithWeather(null, pressureSeries)
+      weatherOnly = true
+    }
+    if (!Array.isArray(combined)) {
+      return { state: 'insufficient', insufficient: base?.insufficient ? base : null }
+    }
+    const s = summarizeCurve(combined)
+    return { state: 'ok', summary: s, weatherOnly, hasPressure: !!pressureSeries }
+  }, [data.checkIns, key, dayPressure])
 
   function openCheckIn(slot) {
     const existing = today.find((c) => c.timeSlot === slot)
@@ -61,17 +89,30 @@ export default function Home() {
     setSheet('med-edit')
   }
 
+  function dismissTip() {
+    try {
+      const n = Number(localStorage.getItem(TIP_DISMISS_KEY) || 0) + 1
+      localStorage.setItem(TIP_DISMISS_KEY, String(n))
+    } catch {}
+    setTipDismissed(true)
+  }
+
   const medUsage = monthlyMedUsage(data.medications)
+  const showSchubTip = !activeFlare && !tipDismissed && (max == null || max <= 5)
+  // Schub-Button erscheint kontextuell: nur wenn heute schon Schmerz > 4 — bzw. immer in einem dezenten Secondary-Look
+  const showSchubButton = !activeFlare
 
   return (
     <>
-      <header className="page-header">
-        <div className="page-header__eyebrow">
-          <Icon name="clock" size={13} /> {dateLabel}
+      {/* ─── Kompakter Header (eine Zeile) ─── */}
+      <header className="page-header page-header--compact">
+        <div className="page-header__line">
+          <span className="page-header__date">{dateLabel}</span>
+          <span className="page-header__sep">·</span>
+          <span className="page-header__greet">
+            {greeting}{data.name ? <>, <em>{data.name}</em></> : ''}.
+          </span>
         </div>
-        <h1 className="page-header__title">
-          {data.name ? <>{greeting}, <em>{data.name}.</em></> : <>{greeting}.</>}
-        </h1>
         {!data.name && <NamePrompt />}
       </header>
 
@@ -88,9 +129,7 @@ export default function Home() {
           <div className="med-warn__icon"><Icon name="pill" size={16} /></div>
           <div>
             <div className="med-warn__title">
-              {medUsage.level === 'high'
-                ? 'Medikamenten-Übergebrauch'
-                : 'Erhöhter Medikamenten-Bedarf'}
+              {medUsage.level === 'high' ? 'Medikamenten-Übergebrauch' : 'Erhöhter Medikamenten-Bedarf'}
             </div>
             <div className="med-warn__sub">
               {medUsage.count} Tage mit Akut-Medi diesen Monat.{' '}
@@ -102,62 +141,99 @@ export default function Home() {
         </div>
       )}
 
-      <div className="card hero-card">
-        <div className="hero-card__head">
-          <span className="hero-card__eyebrow"><Icon name="spark" size={14} /> Tages-Baseline</span>
-          <span className="hero-card__meta">{today.length} / 3 Check-ins</span>
-        </div>
-        <div className="figure">
-          <div
-            className={`figure__num ${avg == null ? 'figure__num--empty' : ''}`}
-            style={avg != null ? { color: painColor(Math.round(avg)) } : undefined}
-          >
-            {avg != null ? avg.toFixed(1) : '—'}
-          </div>
-          <div className="figure__suffix">{avg != null ? painLabel(Math.round(avg)) : 'noch kein Eintrag'}</div>
-        </div>
-        <PainDotScale value={avg ?? 0} size="lg" />
-        <div className="hero-card__stats">
-          <div className="kv"><div className="kv__label">Max heute</div><div className="kv__value">{max ?? '—'}</div></div>
-          <div className="kv"><div className="kv__label">Medikamente</div><div className="kv__value">{meds.length}</div></div>
-          <div className="kv"><div className="kv__label">Schübe</div><div className="kv__value">{data.flares.filter((f) => dayKeyOf(f.startTime) === key).length}</div></div>
-        </div>
-      </div>
+      {/* ─── HERO: Forecast (Kopfschmerz-Wahrscheinlichkeit) ─── */}
+      <ForecastHero forecast={forecast} />
 
-      <div className="section__head">
+      {/* ─── Drei Momente ─── */}
+      <div className="section__head section__head--tight">
         <div className="section__title">Drei Momente</div>
+        <div className="section__meta">{today.length}/3 erfasst</div>
       </div>
       <div className="slots">
         {TIME_SLOTS.map((slot) => {
           const entry = today.find((c) => c.timeSlot === slot.id)
           const meta = SLOT_META[slot.id]
+          const isCurrent = !entry && slot.id === currentSlotId
+          // ist dieser slot zeitlich schon vorbei?
+          const slotPassed = !entry && !isCurrent && hasPassed(slot, now)
+          const klass = [
+            'slot-tile',
+            `card--tint-${meta.tint}`,
+            entry ? 'slot-tile--done' : 'slot-tile--open',
+            isCurrent ? 'slot-tile--now' : '',
+            slotPassed ? 'slot-tile--past' : '',
+          ].filter(Boolean).join(' ')
           return (
-            <button
-              key={slot.id}
-              className={`slot-tile card--tint-${meta.tint}`}
-              onClick={() => openCheckIn(slot.id)}
-            >
+            <button key={slot.id} className={klass} onClick={() => openCheckIn(slot.id)}>
               <div className="slot-tile__top">
-                <div className="slot-tile__icon-wrap"><Icon name={meta.icon} size={16} /></div>
-                <div className="slot-tile__arrow"><Icon name="arrow" size={14} /></div>
+                <div className="slot-tile__icon-wrap">
+                  <Icon name={meta.icon} size={16} />
+                </div>
+                {entry && (
+                  <div className="slot-tile__check" aria-label="erfasst">
+                    <Icon name="check" size={12} />
+                  </div>
+                )}
+                {!entry && isCurrent && <div className="slot-tile__pulse" aria-hidden />}
               </div>
               <div className="slot-tile__label">{slot.label}</div>
               {entry ? (
-                <div className="slot-tile__detail">
-                  <em>{entry.painLevel}</em>/10 · {painTypeLabel(entry.dominantTypes || entry.dominantType)}
+                <div className="slot-tile__entry">
+                  <span className="slot-tile__num" style={{ color: painColor(entry.painLevel) }}>{entry.painLevel}</span>
+                  <span className="slot-tile__num-suffix">/10</span>
+                  <div className="slot-tile__type">{painTypeLabel(entry.dominantTypes || entry.dominantType)}</div>
                 </div>
               ) : (
-                <div className="slot-tile__detail">eintragen</div>
+                <div className="slot-tile__cta">
+                  {isCurrent ? 'jetzt eintragen →' : slotPassed ? 'nachtragen' : 'später'}
+                </div>
               )}
             </button>
           )
         })}
       </div>
 
-      <button type="button" className="card card--clickable timeline-card" onClick={() => setSheet('day-detail')}>
-        <div className="hero-card__head" style={{ marginBottom: 6 }}>
-          <span className="hero-card__eyebrow"><Icon name="clock" size={14} /> Verlauf des Tages</span>
-          <span className="hero-card__meta"><Icon name="arrow" size={12} /> öffnen</span>
+      {/* ─── Tages-Status: 3/3 Hacken ODER kompakter Stats-Strip ─── */}
+      {allDone ? (
+        <DoneBanner avg={avg} max={max} medCount={meds.length} />
+      ) : (
+        <div className="day-strip">
+          <div className="day-strip__kv">
+            <div className="day-strip__label">Ø Schmerz</div>
+            <div
+              className="day-strip__value"
+              style={avg != null ? { color: painColor(Math.round(avg)) } : undefined}
+            >{avg != null ? avg.toFixed(1) : '—'}</div>
+          </div>
+          <div className="day-strip__kv">
+            <div className="day-strip__label">Max</div>
+            <div
+              className="day-strip__value"
+              style={max != null ? { color: painColor(max) } : undefined}
+            >{max ?? '—'}</div>
+          </div>
+          <div className="day-strip__kv">
+            <div className="day-strip__label">Medis</div>
+            <div className="day-strip__value">{meds.length}</div>
+          </div>
+          <div className="day-strip__kv">
+            <div className="day-strip__label">Schübe</div>
+            <div className="day-strip__value">{dayFlares.length}</div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Timeline (kompakter, ganze Karte tappable, kein Outlook drin) ─── */}
+      <button
+        type="button"
+        className="card card--clickable timeline-card"
+        onClick={() => setSheet('day-detail')}
+      >
+        <div className="timeline-card__head">
+          <span className="timeline-card__title">
+            <Icon name="clock" size={14} /> Verlauf des Tages
+          </span>
+          <span className="timeline-card__cta">Details</span>
         </div>
         <DailyTimeline
           checkIns={data.checkIns}
@@ -165,25 +241,29 @@ export default function Home() {
           flares={data.flares}
           dateKey={key}
           dayPressure={dayPressure}
+          compact
         />
       </button>
 
-      <div className="actions">
-        <button className="btn btn-soft" onClick={() => setSheet('med')}>
-          <Icon name="pill" size={16} /> Medikament
+      {/* ─── Primary: Medikament · Secondary: Schub starten ─── */}
+      <div className="home-actions">
+        <button className="btn btn-accent btn-block" onClick={() => setSheet('med')}>
+          <Icon name="pill" size={16} /> Medikament eintragen
         </button>
-        {!activeFlare && (
-          <button className="btn btn-accent" onClick={() => setSheet('flare')}>
-            <Icon name="bolt" size={16} /> Schub starten
+        {showSchubButton && (
+          <button className="btn btn-text" onClick={() => setSheet('flare')}>
+            <Icon name="bolt" size={14} /> akuten Schub starten
           </button>
         )}
       </div>
 
-      {!activeFlare && (
-        <p className="muted" style={{ fontSize: 12, padding: '0 6px', textAlign: 'center' }}>
-          <em>Tipp:</em> "Schub starten" markiert einen akuten Schmerz-Schub mit Start­zeit
-          und Auslöser — du beendest ihn später mit der erreichten Spitze.
-        </p>
+      {showSchubTip && (
+        <div className="home-tip">
+          <div className="home-tip__body">
+            <em>Tipp:</em>{' '}„Schub starten" markiert einen akuten Schmerz-Schub mit Start­zeit und Auslöser — du beendest ihn später mit der erreichten Spitze.
+          </div>
+          <button className="home-tip__dismiss" onClick={dismissTip} aria-label="Hinweis ausblenden">×</button>
+        </div>
       )}
 
       {meds.length > 0 && (
@@ -228,15 +308,7 @@ export default function Home() {
       )}
       {sheet === 'day-detail' && (
         <DayDetail
-          day={{
-            key,
-            date: new Date(),
-            checkIns: today,
-            meds,
-            flares: data.flares.filter((f) => dayKeyOf(f.startTime) === key),
-            avg,
-            max,
-          }}
+          day={{ key, date: new Date(), checkIns: today, meds, flares: dayFlares, avg, max }}
           data={data}
           onClose={() => setSheet(null)}
         />
@@ -245,6 +317,72 @@ export default function Home() {
   )
 }
 
+/* ─────────── Forecast Hero ─────────── */
+function ForecastHero({ forecast }) {
+  if (forecast.state === 'insufficient') {
+    const ins = forecast.insufficient
+    return (
+      <div className="forecast-hero forecast-hero--idle">
+        <div className="forecast-hero__icon"><Icon name="spark" size={18} /></div>
+        <div className="forecast-hero__body">
+          <div className="forecast-hero__eyebrow">Kopfschmerz-Wahrscheinlichkeit</div>
+          <div className="forecast-hero__hint">
+            {ins
+              ? <>Prognose erscheint nach <em>{ins.needed}</em> Tracking-Tagen · noch <em>{ins.needed - ins.daysTracked}</em>.</>
+              : <>Bald verfügbar — sammle ein paar Check-ins und aktiviere bei Bedarf das Wetter.</>}
+          </div>
+        </div>
+      </div>
+    )
+  }
+  const { summary, weatherOnly, hasPressure } = forecast
+  const peakClock = `${String(summary.peakHour).padStart(2, '0')}:00`
+  const peakRisk = Math.round(summary.peakRisk)
+  const color = riskColor(peakRisk)
+  return (
+    <div className="forecast-hero" style={{ '--risk': color }}>
+      <div className="forecast-hero__top">
+        <div className="forecast-hero__eyebrow">
+          <Icon name="spark" size={13} /> Kopfschmerz-Wahrscheinlichkeit
+        </div>
+        <div className="forecast-hero__chip" style={{ color }}>{riskLabel(peakRisk)}</div>
+      </div>
+      <div className="forecast-hero__main">
+        <span className="forecast-hero__num" style={{ color }}>{peakRisk}</span>
+        <span className="forecast-hero__pct" style={{ color }}>%</span>
+        <span className="forecast-hero__peak">
+          Spitze gegen <em>{peakClock}</em>
+        </span>
+      </div>
+      <div className="forecast-hero__sub">
+        {weatherOnly
+          ? 'Aus Luftdruck geschätzt — verfeinert sich mit deinen Check-ins.'
+          : hasPressure
+          ? 'Aus deinen Check-ins + Luftdruck der nächsten Stunden.'
+          : 'Aus deinen Check-ins der letzten Tage.'}
+      </div>
+    </div>
+  )
+}
+
+/* ─────────── 3/3 Done ─────────── */
+function DoneBanner({ avg, max, medCount }) {
+  return (
+    <div className="done-banner">
+      <div className="done-banner__check" aria-hidden>
+        <Icon name="check" size={22} />
+      </div>
+      <div className="done-banner__body">
+        <div className="done-banner__title">Heute komplett erfasst.</div>
+        <div className="done-banner__meta">
+          Ø {avg?.toFixed(1) ?? '—'} · Max {max ?? '—'} · {medCount} Medis
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─────────── Active Flare Card (unverändert) ─────────── */
 function FlareCard({ flare, onEnd, onAdjust }) {
   const start = new Date(flare.startTime)
   const now = new Date()
@@ -287,6 +425,7 @@ function FlareCard({ flare, onEnd, onAdjust }) {
   )
 }
 
+/* ─────────── Name Prompt (unverändert) ─────────── */
 function NamePrompt() {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState('')
@@ -308,10 +447,7 @@ function NamePrompt() {
   }
 
   return (
-    <form
-      className="name-prompt name-prompt--editing"
-      onSubmit={(e) => { e.preventDefault(); save() }}
-    >
+    <form className="name-prompt name-prompt--editing" onSubmit={(e) => { e.preventDefault(); save() }}>
       <input
         ref={inputRef}
         className="input name-prompt__input"
@@ -332,4 +468,12 @@ function getGreeting(h) {
   if (h < 18) return 'Guten Tag'
   if (h < 22) return 'Guten Abend'
   return 'Späte Stunde'
+}
+
+// Ist der Slot schon vorbei (heute, aktueller Zeitpunkt liegt nach slot.to)?
+function hasPassed(slot, now) {
+  const h = now.getHours()
+  // Slot "evening" wraps midnight — wir behandeln 18..5 als "läuft noch"
+  if (slot.from < slot.to) return h >= slot.to
+  return false
 }

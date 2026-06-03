@@ -8,7 +8,7 @@ const HOURS = 24
 const PLOT_W = 1000
 const PLOT_H = 100
 
-export default function DailyTimeline({ checkIns, medications, flares, dateKey, showPrediction = true, dayPressure = null }) {
+export default function DailyTimeline({ checkIns, medications, flares, dateKey, showPrediction = true, dayPressure = null, compact = false }) {
   const key = dateKey || todayKey()
   const dayCheckIns = checkIns
     .filter((c) => dayKeyOf(c.timestamp) === key)
@@ -43,11 +43,11 @@ export default function DailyTimeline({ checkIns, medications, flares, dateKey, 
   const pressureRange = useMemo(() => pressureMinMax(pressureSeries), [pressureSeries])
 
   return (
-    <div className="timeline">
-      {isCurve && summary && (
+    <div className={`timeline ${compact ? 'timeline--compact' : ''}`}>
+      {!compact && isCurve && summary && (
         <Outlook summary={summary} weatherOnly={weatherOnly} hasPressure={!!pressureSeries} />
       )}
-      {!isCurve && baseCurve && baseCurve.insufficient && !pressureSeries && (
+      {!compact && !isCurve && baseCurve && baseCurve.insufficient && !pressureSeries && (
         <div className="outlook outlook--idle">
           <Icon name="spark" size={14} />
           <span>
@@ -88,7 +88,7 @@ export default function DailyTimeline({ checkIns, medications, flares, dateKey, 
           </svg>
         )}
 
-        {pressurePath && (
+        {!compact && pressurePath && (
           <svg
             className="timeline__pressure"
             viewBox={`0 0 ${PLOT_W} ${PLOT_H}`}
@@ -164,10 +164,10 @@ export default function DailyTimeline({ checkIns, medications, flares, dateKey, 
             <svg width="14" height="2" style={{ marginRight: 4 }}>
               <line x1="0" y1="1" x2="14" y2="1" stroke="var(--clay)" strokeWidth="1.5" strokeDasharray="3 3" />
             </svg>
-            Wahrscheinlichkeit
+            Risiko
           </span>
         )}
-        {pressurePath && (
+        {!compact && pressurePath && (
           <span title={pressureRange ? `${pressureRange.min}–${pressureRange.max} hPa` : 'Luftdruck'}>
             <svg width="14" height="2" style={{ marginRight: 4 }}>
               <line x1="0" y1="1" x2="14" y2="1" stroke="var(--ink-faint)" strokeWidth="1.25" />
@@ -175,7 +175,7 @@ export default function DailyTimeline({ checkIns, medications, flares, dateKey, 
             Luftdruck
           </span>
         )}
-        {nowPct != null && (
+        {!compact && nowPct != null && (
           <span><span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--clay)' }} /> Jetzt</span>
         )}
       </div>

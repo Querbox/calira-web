@@ -5,6 +5,7 @@ import History from './screens/History'
 import Settings from './screens/Settings'
 import Icon from './components/Icon'
 import UpdateBanner from './components/UpdateBanner'
+import InstallPrompt from './components/InstallPrompt'
 import { usePager } from './lib/usePager'
 import { useNotifications } from './hooks/useNotifications'
 
@@ -74,6 +75,7 @@ export default function App() {
   return (
     <div className="app">
       <UpdateBanner />
+      <InstallPrompt />
       <div className="app__pages" ref={pagesRef}>
         <main className={`app__main ${enterDir ? `app__main--${enterDir}` : ''}`} key={tab}>
           {tab === 'home' && <Home />}

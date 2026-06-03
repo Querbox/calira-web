@@ -1547,6 +1547,121 @@
   justify-content: center;
 }
 
+/* ─── Install prompt ───────────────────────────────────────── */
+.install-prompt {
+  position: fixed;
+  bottom: 80px;
+  left: 12px;
+  right: 12px;
+  z-index: 55;
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hover);
+  animation: install-slide 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes install-slide {
+  from { transform: translateY(120%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.install-prompt__icon {
+  width: 32px; height: 32px;
+  border-radius: 10px;
+  background: var(--clay);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.install-prompt__title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+.install-prompt__desc {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+.install-prompt__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.install-prompt__btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--clay);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.install-prompt__btn:active { opacity: 0.85; }
+.install-prompt__dismiss {
+  width: 32px; height: 32px;
+  font-size: 20px;
+  color: var(--ink-faint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.install-help-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(20, 17, 15, 0.45);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 20px;
+  animation: fade-in 0.2s ease;
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.install-help {
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 22px 22px 18px;
+  box-shadow: var(--shadow-hover);
+  animation: install-slide 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.install-help__title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.015em;
+  margin-bottom: 14px;
+}
+.install-help__steps {
+  margin: 0;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+.install-help__steps li::marker { color: var(--clay); font-weight: 700; }
+.install-help__note {
+  margin: 14px 0 16px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
+
 /* ─── Wordmark ─────────────────────────────────────────────── */
 .wordmark-block {
   text-align: center;

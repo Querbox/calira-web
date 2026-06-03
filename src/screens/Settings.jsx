@@ -23,13 +23,12 @@ const FONTS = [
 export default function Settings() {
   const data = useData()
   const total = data.checkIns.length + data.medications.length + data.flares.length
-  const scheme = data.scheme || 'light'
   const fileInput = useRef(null)
   const [printing, setPrinting] = useState(false)
 
   async function onImportFile(e) {
     const file = e.target.files?.[0]
-    e.target.value = '' // allow re-importing the same file
+    e.target.value = ''
     if (!file) return
     try {
       const text = await file.text()
@@ -65,10 +64,8 @@ export default function Settings() {
         <h1 className="page-header__title">Daten & <em>Stille.</em></h1>
       </header>
 
-      <div className="card">
-        <div className="section__head" style={{ padding: '0 0 10px' }}>
-          <div className="section__title">Name</div>
-        </div>
+      {/* ───────────────── Persönlich ───────────────── */}
+      <SettingsCard icon="spark" title="Persönlich">
         <input
           className="input"
           value={data.name || ''}
@@ -76,138 +73,31 @@ export default function Settings() {
           placeholder="dein Vorname (z. B. Jana)"
           maxLength={32}
         />
-        <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+        <p className="settings-row__hint">
           Erscheint nur in der Begrüßung auf der Startseite.
         </p>
-      </div>
+      </SettingsCard>
 
-      <div className="card">
-        <div className="section__head" style={{ padding: '0 0 10px' }}>
-          <div className="section__title">Darstellung</div>
-        </div>
-        <div className="scheme-toggle">
-          <button
-            className={`scheme-toggle__btn ${scheme === 'light' ? 'is-active' : ''}`}
-            onClick={() => actions.setScheme('light')}
-          >
-            <Icon name="sun" size={14} /> Hell
-          </button>
-          <button
-            className={`scheme-toggle__btn ${scheme === 'dark' ? 'is-active' : ''}`}
-            onClick={() => actions.setScheme('dark')}
-          >
-            <Icon name="moon" size={14} /> Dunkel
-          </button>
-        </div>
-      </div>
+      {/* ───────────────── Darstellung ───────────────── */}
+      <DisplayCard data={data} />
 
-      <div className="card">
-        <div className="section__head" style={{ padding: '0 0 10px' }}>
-          <div className="section__title">Bewegung</div>
-          <div className="section__meta">{
-            (data.motion || 'auto') === 'auto' ? 'System' :
-            (data.motion === 'reduced') ? 'reduziert' : 'voll'
-          }</div>
-        </div>
-        <div className="scheme-toggle" style={{ marginBottom: 8 }}>
-          <button
-            className={`scheme-toggle__btn ${(data.motion || 'auto') === 'auto' ? 'is-active' : ''}`}
-            onClick={() => actions.setMotion('auto')}
-          >
-            <Icon name="refresh" size={14} /> System
-          </button>
-          <button
-            className={`scheme-toggle__btn ${data.motion === 'full' ? 'is-active' : ''}`}
-            onClick={() => actions.setMotion('full')}
-          >
-            <Icon name="spark" size={14} /> Voll
-          </button>
-          <button
-            className={`scheme-toggle__btn ${data.motion === 'reduced' ? 'is-active' : ''}`}
-            onClick={() => actions.setMotion('reduced')}
-          >
-            <Icon name="check" size={14} /> Reduziert
-          </button>
-        </div>
-        <p className="muted" style={{ fontSize: 12 }}>
-          <em>System</em> folgt deiner OS-Einstellung „Bewegung reduzieren".
-          <em> Reduziert</em> schaltet alle Übergänge ab — nützlich bei Migräne oder Visualisierungsproblemen.
-        </p>
-      </div>
-
-      <div className="card">
-        <div className="section__head" style={{ padding: '0 0 10px' }}>
-          <div className="section__title">Akzentfarbe</div>
-          <div className="section__meta">{THEMES.find((t) => t.id === (data.theme || 'clay'))?.label}</div>
-        </div>
-        <div className="theme-picker">
-          {THEMES.map((t) => (
-            <button
-              key={t.id}
-              className={`theme-swatch ${data.theme === t.id || (!data.theme && t.id === 'clay') ? 'is-active' : ''}`}
-              onClick={() => actions.setTheme(t.id)}
-              aria-label={t.label}
-            >
-              <span className="theme-swatch__dot" style={{ background: t.swatch }} />
-              <span className="theme-swatch__label">{t.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="section__head" style={{ padding: '0 0 10px' }}>
-          <div className="section__title">Schriftpaarung</div>
-          <div className="section__meta">{FONTS.find((f) => f.id === (data.fontMode || 'quiet'))?.label}</div>
-        </div>
-        <div className="font-picker">
-          {FONTS.map((f) => (
-            <button
-              key={f.id}
-              className={`font-card ${data.fontMode === f.id || (!data.fontMode && f.id === 'quiet') ? 'is-active' : ''}`}
-              onClick={() => actions.setFontMode(f.id)}
-            >
-              <div className="font-card__preview" style={{ fontFamily: f.serif }}>Aa</div>
-              <div className="font-card__name">{f.label}</div>
-              <div className="font-card__desc">{f.desc}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-
+      {/* ───────────────── Benachrichtigungen ───────────────── */}
       <NotificationsCard />
 
-      <div className="card">
-        <div className="section__head" style={{ padding: '0 0 10px' }}>
-          <div className="section__title">App-Update</div>
-        </div>
-        <p className="muted" style={{ fontSize: 13 }}>
-          Falls Calira nach einem Update gleich aussieht, ist wahrscheinlich der
-          Cache der Home-Screen-App noch alt. <em>Auf Updates prüfen</em> lädt
-          alles frisch — deine Einträge bleiben erhalten.
-        </p>
-        <button
-          className="btn btn-soft btn-block"
-          style={{ marginTop: 12 }}
-          onClick={() => actions.checkForUpdates()}
-        >
-          <Icon name="refresh" size={15} /> Auf Updates prüfen & neu laden
-        </button>
-      </div>
-
-      <div className="card">
-        <div className="section__head" style={{ padding: '0 0 10px' }}>
-          <div className="section__title">Deine Daten</div>
-        </div>
-        <p className="muted">
+      {/* ───────────────── Daten ───────────────── */}
+      <SettingsCard icon="download" title="Deine Daten" meta={`${total} Einträge`}>
+        <p className="settings-row__hint">
           Alle Einträge bleiben <em>lokal</em> in deinem Browser. Nichts wird hochgeladen, niemand kann mitlesen.
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
-          <div className="kv"><div className="kv__label">Einträge</div><div className="kv__value">{total}</div></div>
-          <div className="kv"><div className="kv__label">Check-ins</div><div className="kv__value">{data.checkIns.length}</div></div>
-          <div className="kv"><div className="kv__label">Medis</div><div className="kv__value">{data.medications.length}</div></div>
+
+        <div className="settings-stats">
+          <Stat label="Check-ins" value={data.checkIns.length} />
+          <Stat label="Medis" value={data.medications.length} />
+          <Stat label="Schübe" value={data.flares.length} />
         </div>
-        <div className="actions" style={{ marginTop: 16, gridTemplateColumns: '1fr 1fr' }}>
+
+        <div className="settings-subhead">Export & Import</div>
+        <div className="settings-grid-2">
           <button className="btn btn-soft" onClick={exportData}>
             <Icon name="download" size={15} /> Exportieren
           </button>
@@ -222,11 +112,9 @@ export default function Settings() {
           style={{ display: 'none' }}
           onChange={onImportFile}
         />
-        <button
-          className="btn btn-soft btn-block"
-          style={{ marginTop: 8 }}
-          onClick={actions.seedDemo}
-        >
+
+        <div className="settings-subhead">Werkzeuge</div>
+        <button className="btn btn-soft btn-block" onClick={actions.seedDemo}>
           <Icon name="spark" size={15} /> Demo-Daten laden
         </button>
         <button
@@ -236,16 +124,13 @@ export default function Settings() {
         >
           <Icon name="trash" size={15} /> Alle Daten löschen
         </button>
-      </div>
+      </SettingsCard>
 
-      <div className="card">
-        <div className="section__head" style={{ padding: '0 0 10px' }}>
-          <div className="section__title">Bericht für Ärzt*in</div>
-        </div>
-        <p className="muted" style={{ fontSize: 13 }}>
-          Eine druckbare 1-Seiten-Übersicht der letzten <em>28 Tage</em> —
-          Tagestabelle, Medikamenten-Übersicht und häufigste Auslöser.
-          Im Druckdialog kannst du auch <em>"Als PDF sichern"</em> wählen.
+      {/* ───────────────── Bericht ───────────────── */}
+      <SettingsCard icon="download" title="Bericht für Ärzt*in">
+        <p className="settings-row__hint">
+          Druckbare 1-Seiten-Übersicht der letzten <em>28 Tage</em> — Tagestabelle,
+          Medikamenten-Übersicht und häufigste Auslöser. Im Druckdialog auch als <em>PDF speichern</em>.
         </p>
         <button
           className="btn btn-soft btn-block"
@@ -254,20 +139,31 @@ export default function Settings() {
         >
           <Icon name="download" size={15} /> Bericht drucken / als PDF
         </button>
-      </div>
-
+      </SettingsCard>
       {printing && <PrintReport data={data} onClose={() => setPrinting(false)} />}
 
-      <div className="card">
-        <div className="section__head" style={{ padding: '0 0 10px' }}>
-          <div className="section__title">Über Calira</div>
-        </div>
-        <p className="muted">
+      {/* ───────────────── App & Über ───────────────── */}
+      <SettingsCard icon="refresh" title="App">
+        <p className="settings-row__hint">
+          Calira lädt automatisch frische Daten. Wenn etwas nach einem Update gleich aussieht,
+          ist meist der Cache der Home-Screen-App noch alt — dann hilft <em>Auf Updates prüfen</em>.
+          Deine Einträge bleiben erhalten.
+        </p>
+        <button
+          className="btn btn-soft btn-block"
+          style={{ marginTop: 12 }}
+          onClick={() => actions.checkForUpdates()}
+        >
+          <Icon name="refresh" size={15} /> Auf Updates prüfen & neu laden
+        </button>
+
+        <div className="settings-subhead">Über Calira</div>
+        <p className="settings-row__hint">
           Ein leises Tagebuch für chronische Kopfschmerzen. Drei Momente am Tag —
           Morgens, Mittags, Abends. Keine Pop-ups, keine Streaks, keine Punkte.
           <em> Nur du und der Tag.</em>
         </p>
-      </div>
+      </SettingsCard>
 
       <div className="wordmark-block">
         <div className="wordmark-block__name">Calira</div>
@@ -276,6 +172,100 @@ export default function Settings() {
     </>
   )
 }
+
+/* ─────────── Reusable building blocks ─────────── */
+
+function SettingsCard({ icon, title, meta, children }) {
+  return (
+    <div className="card settings-card">
+      <div className="settings-card__head">
+        <div className="settings-card__title">
+          {icon && <Icon name={icon} size={14} />}
+          <span>{title}</span>
+        </div>
+        {meta && <div className="settings-card__meta">{meta}</div>}
+      </div>
+      <div className="settings-card__body">{children}</div>
+    </div>
+  )
+}
+
+function Stat({ label, value }) {
+  return (
+    <div className="kv">
+      <div className="kv__label">{label}</div>
+      <div className="kv__value">{value}</div>
+    </div>
+  )
+}
+
+/* ─────────── Darstellung (combines scheme / accent / font / motion) ─────────── */
+
+function DisplayCard({ data }) {
+  const scheme = data.scheme || 'light'
+  const motion = data.motion || 'auto'
+  return (
+    <SettingsCard icon="sun" title="Darstellung">
+      <div className="settings-subhead">Helligkeit</div>
+      <div className="seg">
+        <button className={`seg__btn ${scheme === 'light' ? 'is-active' : ''}`} onClick={() => actions.setScheme('light')}>
+          <Icon name="sun" size={14} /> Hell
+        </button>
+        <button className={`seg__btn ${scheme === 'dark' ? 'is-active' : ''}`} onClick={() => actions.setScheme('dark')}>
+          <Icon name="moon" size={14} /> Dunkel
+        </button>
+      </div>
+
+      <div className="settings-subhead">Akzentfarbe</div>
+      <div className="theme-picker">
+        {THEMES.map((t) => (
+          <button
+            key={t.id}
+            className={`theme-swatch ${data.theme === t.id || (!data.theme && t.id === 'clay') ? 'is-active' : ''}`}
+            onClick={() => actions.setTheme(t.id)}
+            aria-label={t.label}
+          >
+            <span className="theme-swatch__dot" style={{ background: t.swatch }} />
+            <span className="theme-swatch__label">{t.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="settings-subhead">Schriftpaarung</div>
+      <div className="font-picker">
+        {FONTS.map((f) => (
+          <button
+            key={f.id}
+            className={`font-card ${data.fontMode === f.id || (!data.fontMode && f.id === 'quiet') ? 'is-active' : ''}`}
+            onClick={() => actions.setFontMode(f.id)}
+          >
+            <div className="font-card__preview" style={{ fontFamily: f.serif }}>Aa</div>
+            <div className="font-card__name">{f.label}</div>
+            <div className="font-card__desc">{f.desc}</div>
+          </button>
+        ))}
+      </div>
+
+      <div className="settings-subhead">Bewegung</div>
+      <div className="seg seg--3">
+        <button className={`seg__btn ${motion === 'auto' ? 'is-active' : ''}`} onClick={() => actions.setMotion('auto')}>
+          <Icon name="refresh" size={14} /> System
+        </button>
+        <button className={`seg__btn ${motion === 'full' ? 'is-active' : ''}`} onClick={() => actions.setMotion('full')}>
+          <Icon name="spark" size={14} /> Voll
+        </button>
+        <button className={`seg__btn ${motion === 'reduced' ? 'is-active' : ''}`} onClick={() => actions.setMotion('reduced')}>
+          <Icon name="check" size={14} /> Reduziert
+        </button>
+      </div>
+      <p className="settings-row__hint">
+        <em>Reduziert</em> schaltet Übergänge ab — hilft bei Migräne oder Visualisierungsproblemen.
+      </p>
+    </SettingsCard>
+  )
+}
+
+/* ─────────── Notifications ─────────── */
 
 function NotificationsCard() {
   const [prefs, setPrefsState] = useState(getPrefs())
@@ -312,44 +302,36 @@ function NotificationsCard() {
   const supported = perm !== 'unsupported'
   const enabled = prefs.enabled && perm === 'granted'
 
+  const meta =
+    !supported ? 'nicht verfügbar' :
+    perm === 'denied' ? 'blockiert' :
+    enabled ? 'aktiv' : 'aus'
+
   const CATS = [
     { id: 'slotReminders', label: 'Check-in-Erinnerungen', desc: 'Morgens / Mittags / Abends — nur wenn noch nichts erfasst ist.' },
-    { id: 'pressureAlert', label: 'Luftdruck-Warnung', desc: 'Bei einem Druckabfall ≥ 3 hPa in den nächsten 3 Stunden.' },
-    { id: 'riskAlert',     label: 'Risiko-Vorschau',    desc: 'Wenn deine kombinierte Wahrscheinlichkeit für die nächste Stunde ≥ 65 % ist.' },
-    { id: 'flareNudge',    label: 'Schub-Nudge',         desc: 'Sanfter Hinweis, wenn ein laufender Schub seit 90 min nicht aktualisiert wurde.' },
+    { id: 'pressureAlert', label: 'Luftdruck-Warnung',     desc: 'Bei Druckabfall ≥ 3 hPa in den nächsten 3 h.' },
+    { id: 'riskAlert',     label: 'Risiko-Vorschau',       desc: 'Wenn deine Wahrscheinlichkeit für die nächste Stunde ≥ 65 % liegt.' },
+    { id: 'flareNudge',    label: 'Schub-Nudge',           desc: 'Wenn ein laufender Schub seit 90 min nicht aktualisiert wurde.' },
   ]
 
   return (
-    <div className="card">
-      <div className="section__head" style={{ padding: '0 0 10px' }}>
-        <div className="section__title">Benachrichtigungen</div>
-        <div className="section__meta">
-          {!supported ? 'nicht verfügbar' :
-           perm === 'denied' ? 'blockiert' :
-           enabled ? 'aktiv' : 'aus'}
-        </div>
-      </div>
-
+    <SettingsCard icon="spark" title="Benachrichtigungen" meta={meta}>
       {!supported && (
-        <p className="muted" style={{ fontSize: 13 }}>
-          Dein Browser unterstützt keine Benachrichtigungen. Auf iOS musst du Calira erst
-          zum Home-Bildschirm hinzufügen.
+        <p className="settings-row__hint">
+          Dein Browser unterstützt keine Benachrichtigungen. Auf iOS musst du Calira erst zum Home-Bildschirm hinzufügen.
         </p>
       )}
 
       {supported && perm === 'denied' && (
-        <p className="muted" style={{ fontSize: 13 }}>
-          Benachrichtigungen sind in deinen Browser-Einstellungen blockiert. Du musst sie
-          dort für diese Seite manuell erlauben.
+        <p className="settings-row__hint">
+          Benachrichtigungen sind in deinen Browser-Einstellungen blockiert. Erlaube sie dort manuell für diese Seite.
         </p>
       )}
 
       {supported && perm !== 'denied' && !enabled && (
         <>
-          <p className="muted" style={{ fontSize: 13 }}>
-            Calira meldet sich nur in <em>klugen Momenten</em> — bei fallendem Luftdruck,
-            erhöhter Wahrscheinlichkeit, oder wenn du einen Check-in vergisst.
-            Nie Streaks, nie Spam.
+          <p className="settings-row__hint">
+            Nur in <em>klugen Momenten</em> — bei fallendem Luftdruck, erhöhter Wahrscheinlichkeit, oder wenn du einen Check-in vergisst. Nie Streaks, nie Spam.
           </p>
           <button className="btn btn-accent btn-block" style={{ marginTop: 12 }} onClick={onEnable}>
             <Icon name="spark" size={15} /> Aktivieren
@@ -359,11 +341,12 @@ function NotificationsCard() {
 
       {enabled && (
         <>
-          <p className="muted" style={{ fontSize: 13 }}>
-            Aktiv solange die App geöffnet ist (oder als Home-Screen-App im Hintergrund läuft).
+          <p className="settings-row__hint">
+            Aktiv solange Calira geöffnet ist (oder als Home-Screen-App im Hintergrund läuft).
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+          <div className="settings-subhead">Welche Hinweise</div>
+          <div className="notify-list">
             {CATS.map((c) => (
               <label key={c.id} className="notify-row">
                 <input
@@ -379,12 +362,7 @@ function NotificationsCard() {
             ))}
           </div>
 
-          <div className="section__head" style={{ padding: '14px 0 8px', borderTop: '1px solid var(--line)', marginTop: 14 }}>
-            <div className="section__title" style={{ fontSize: 14 }}>Ruhezeiten</div>
-            <div className="section__meta">
-              {String(prefs.quietStart).padStart(2, '0')}:00 – {String(prefs.quietEnd).padStart(2, '0')}:00
-            </div>
-          </div>
+          <div className="settings-subhead">Ruhezeiten</div>
           <div className="quiet-hours">
             <label>
               <span>von</span>
@@ -404,7 +382,7 @@ function NotificationsCard() {
             </label>
           </div>
 
-          <div className="actions" style={{ marginTop: 14, gridTemplateColumns: '1fr 1fr' }}>
+          <div className="settings-grid-2" style={{ marginTop: 14 }}>
             <button className="btn btn-soft" onClick={onTest}>
               <Icon name="spark" size={14} /> Test {testFeedback && `· ${testFeedback}`}
             </button>
@@ -414,6 +392,6 @@ function NotificationsCard() {
           </div>
         </>
       )}
-    </div>
+    </SettingsCard>
   )
 }

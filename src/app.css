@@ -1712,6 +1712,116 @@
   margin-top: 4px;
 }
 
+/* ─── Settings cards (unified layout) ──────────────────────── */
+.settings-card {
+  padding: 0;
+  overflow: hidden;
+}
+.settings-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
+}
+.settings-card__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.settings-card__title .icon { color: var(--clay); }
+.settings-card__meta {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  letter-spacing: -0.01em;
+}
+.settings-card__body {
+  padding: 18px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.settings-subhead {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  margin-top: 14px;
+  margin-bottom: 4px;
+}
+.settings-card__body > .settings-subhead:first-child { margin-top: 0; }
+.settings-row__hint {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  line-height: 1.5;
+  margin: 0;
+}
+.settings-row__hint em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.settings-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin: 6px 0 2px;
+}
+.settings-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Segmented control (replaces .scheme-toggle within settings cards) */
+.seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  background: var(--bg-soft);
+  padding: 3px;
+  border-radius: 999px;
+}
+.seg--3 { grid-template-columns: repeat(3, 1fr); }
+.seg__btn {
+  padding: 9px 12px;
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.seg__btn.is-active {
+  background: var(--bg-card);
+  color: var(--ink);
+  box-shadow: var(--shadow-card);
+}
+
+.notify-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 /* ─── Notifications card ───────────────────────────────────── */
 .notify-row {
   display: grid;

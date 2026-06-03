@@ -211,7 +211,7 @@ export default function History() {
   )
 }
 
-function DayDetail({ day, data, dayList, onNavigate, onClose }) {
+export function DayDetail({ day, data, dayList = [], onNavigate, onClose }) {
   const sheetRef = useRef(null)
   const [editing, setEditing] = useState(null) // { kind, entry }
 
@@ -219,30 +219,25 @@ function DayDetail({ day, data, dayList, onNavigate, onClose }) {
     onDrag: (dy) => {
       if (sheetRef.current) sheetRef.current.style.transform = `translateY(${dy}px)`
     },
-    onRelease: () => {
+    onRelease: (dy) => {
       const el = sheetRef.current
       if (!el) return
-      const m = new DOMMatrix(getComputedStyle(el).transform)
       el.style.transform = ''
-      if (m.m42 > 120) onClose()
+      if (dy > 140) onClose()
     },
   })
 
   useSwipe(sheetRef, {
-    onLeft: () => onNavigate(1),
-    onRight: () => onNavigate(-1),
+    onLeft: () => onNavigate?.(1),
+    onRight: () => onNavigate?.(-1),
     threshold: 80,
   })
 
-  const idx = dayList.findIndex((d) => d.key === day.key)
-  const hasPrev = idx >= 0 && idx < dayList.length - 1
-  const hasNext = idx > 0
-
   return (
     <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet" ref={sheetRef} onClick={(e) => e.stopPropagation()}>
-        <div className="sheet__grabber" />
-        <div className="sheet__head">
+      <div className="sheet sheet--full" ref={sheetRef} onClick={(e) => e.stopPropagation()}>
+        <div className="sheet__grabber" data-sheet-handle />
+        <div className="sheet__head" data-sheet-handle>
           <div>
             <div className="sheet__eyebrow">
               {day.date.toLocaleDateString('de-DE', { weekday: 'long' })}
@@ -316,9 +311,6 @@ function DayDetail({ day, data, dayList, onNavigate, onClose }) {
             <MedicationSheet existing={editing.entry} onClose={() => setEditing(null)} />
           )}
 
-          <div className="sheet__hint">
-            {hasPrev || hasNext ? 'wischen zum Tag wechseln' : ''} · nach unten ziehen zum Schließen
-          </div>
         </div>
       </div>
     </div>

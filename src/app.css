@@ -1547,6 +1547,34 @@
   justify-content: center;
 }
 
+/* ─── Clickable card ───────────────────────────────────────── */
+.card--clickable {
+  display: block;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+.card--clickable:active { transform: scale(0.995); }
+.card--clickable:hover { box-shadow: var(--shadow-hover); }
+.timeline-card .hero-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--clay);
+  font-weight: 600;
+}
+
+/* ─── Full-height sheet variant (day detail) ──────────────── */
+.sheet--full {
+  max-height: 96vh;
+  min-height: 80vh;
+  padding-bottom: 48px;
+}
+.sheet--full .sheet__body { gap: 24px; }
+
 /* ─── Install prompt ───────────────────────────────────────── */
 .install-prompt {
   position: fixed;

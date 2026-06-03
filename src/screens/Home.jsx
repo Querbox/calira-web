@@ -10,6 +10,7 @@ import PainDotScale from '../components/PainDotScale'
 import Icon from '../components/Icon'
 import { monthlyMedUsage } from '../lib/insights'
 import { fetchDayPressure } from '../lib/weather'
+import { DayDetail } from './History'
 
 const SLOT_META = {
   morning: { icon: 'sun',   tint: 'morning' },
@@ -153,9 +154,10 @@ export default function Home() {
         })}
       </div>
 
-      <div className="card">
+      <button type="button" className="card card--clickable timeline-card" onClick={() => setSheet('day-detail')}>
         <div className="hero-card__head" style={{ marginBottom: 6 }}>
           <span className="hero-card__eyebrow"><Icon name="clock" size={14} /> Verlauf des Tages</span>
+          <span className="hero-card__meta"><Icon name="arrow" size={12} /> öffnen</span>
         </div>
         <DailyTimeline
           checkIns={data.checkIns}
@@ -164,7 +166,7 @@ export default function Home() {
           dateKey={key}
           dayPressure={dayPressure}
         />
-      </div>
+      </button>
 
       <div className="actions">
         <button className="btn btn-soft" onClick={() => setSheet('med')}>
@@ -221,6 +223,21 @@ export default function Home() {
         <EndFlareSheet
           flare={activeFlare}
           suggestedPeak={Math.max(activeFlare.peakIntensity || 5, ...today.map((c) => c.painLevel), 0)}
+          onClose={() => setSheet(null)}
+        />
+      )}
+      {sheet === 'day-detail' && (
+        <DayDetail
+          day={{
+            key,
+            date: new Date(),
+            checkIns: today,
+            meds,
+            flares: data.flares.filter((f) => dayKeyOf(f.startTime) === key),
+            avg,
+            max,
+          }}
+          data={data}
           onClose={() => setSheet(null)}
         />
       )}

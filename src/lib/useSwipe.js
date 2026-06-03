@@ -64,7 +64,7 @@ export function useSwipe(ref, { onLeft, onRight, onDown, onUp, threshold = 60, e
  * Detach swipe with live drag offset reporting (for sheet dismissal).
  * Calls onDrag(dy) while dragging downward; calls onRelease(commit:boolean).
  */
-export function useDragDownToDismiss(ref, { onDrag, onRelease, commitAt = 120 } = {}) {
+export function useDragDownToDismiss(ref, { onDrag, onRelease } = {}) {
   const state = useRef(null)
 
   useEffect(() => {
@@ -74,27 +74,29 @@ export function useDragDownToDismiss(ref, { onDrag, onRelease, commitAt = 120 } 
     function start(e) {
       const t = e.touches[0]
       const target = e.target
-      const scrollable = target.closest && target.closest('.sheet')
-      // Only allow drag when scroll is at top of the sheet
-      if (scrollable && scrollable.scrollTop > 4) return
-      state.current = { y: t.clientY, dragging: false }
+      // Only initiate the dismiss gesture when the touch begins on a
+      // designated handle (grabber / header). Scrolling within the body
+      // therefore never triggers dismiss — even when scrollTop hits 0.
+      const handle = target.closest && target.closest('[data-sheet-handle]')
+      if (!handle) return
+      state.current = { y: t.clientY, dragging: false, dy: 0 }
     }
     function move(e) {
       if (!state.current) return
       const t = e.touches[0]
       const dy = t.clientY - state.current.y
       if (dy < 0) return
-      if (!state.current.dragging && dy > 6) state.current.dragging = true
-      if (state.current.dragging) onDrag?.(dy)
+      if (!state.current.dragging && dy > 8) state.current.dragging = true
+      if (state.current.dragging) {
+        state.current.dy = dy
+        onDrag?.(dy)
+      }
     }
     function end() {
       const s = state.current
       state.current = null
-      if (!s || !s.dragging) {
-        onRelease?.(false)
-        return
-      }
-      onRelease?.(s.dragging)
+      if (!s || !s.dragging) return
+      onRelease?.(s.dy || 0)
     }
 
     el.addEventListener('touchstart', start, { passive: true })
@@ -107,5 +109,5 @@ export function useDragDownToDismiss(ref, { onDrag, onRelease, commitAt = 120 } 
       el.removeEventListener('touchend', end)
       el.removeEventListener('touchcancel', end)
     }
-  }, [ref, onDrag, onRelease, commitAt])
+  }, [ref, onDrag, onRelease])
 }

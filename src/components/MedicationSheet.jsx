@@ -17,12 +17,11 @@ export default function MedicationSheet({ existing, onClose }) {
 
   useDragDownToDismiss(sheetRef, {
     onDrag: (dy) => { if (sheetRef.current) sheetRef.current.style.transform = `translateY(${dy}px)` },
-    onRelease: () => {
+    onRelease: (dy) => {
       const el = sheetRef.current
       if (!el) return
-      const m = new DOMMatrix(getComputedStyle(el).transform)
       el.style.transform = ''
-      if (m.m42 > 120) onClose()
+      if (dy > 140) onClose()
     },
   })
 
@@ -45,9 +44,9 @@ export default function MedicationSheet({ existing, onClose }) {
   return (
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" ref={sheetRef} onClick={(e) => e.stopPropagation()}>
-        <div className="sheet__grabber" />
+        <div className="sheet__grabber" data-sheet-handle />
 
-        <div className="sheet__head">
+        <div className="sheet__head" data-sheet-handle>
           <div>
             <div className="sheet__eyebrow">
               <Icon name="pill" size={12} /> Medikament {isEdit && '· bearbeiten'}

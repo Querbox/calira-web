@@ -75,8 +75,8 @@ body {
   letter-spacing: -0.005em;
   overflow-x: hidden;
   background-image:
-    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(236, 122, 90, 0.10) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(236, 122, 90, 0.06) 0%, transparent 60%);
+    radial-gradient(ellipse 80% 60% at 50% -10%, color-mix(in srgb, var(--clay) 10%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 110%, color-mix(in srgb, var(--clay) 6%, transparent) 0%, transparent 60%);
   background-attachment: fixed, fixed;
   overscroll-behavior-y: none;
 }
@@ -135,7 +135,7 @@ a { color: inherit; }
 }
 :root[data-scheme="dark"] body {
   background-image:
-    radial-gradient(ellipse 90% 70% at 50% -10%, rgba(236, 122, 90, 0.08) 0%, transparent 60%);
+    radial-gradient(ellipse 90% 70% at 50% -10%, color-mix(in srgb, var(--clay) 8%, transparent) 0%, transparent 60%);
 }
 
 /* ─── Accent variants ──────────────────────────────────────── */

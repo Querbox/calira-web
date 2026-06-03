@@ -50,7 +50,6 @@ export default function Home() {
   const allDone = today.length >= 3
 
   const now = new Date()
-  const dateLabel = now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })
   const greeting = getGreeting(now.getHours())
   const currentSlotId = slotForHour(now.getHours())
 
@@ -104,11 +103,9 @@ export default function Home() {
 
   return (
     <>
-      {/* ─── Kompakter Header (eine Zeile) ─── */}
+      {/* ─── Kompakter Header (nur Begrüßung) ─── */}
       <header className="page-header page-header--compact">
         <div className="page-header__line">
-          <span className="page-header__date">{dateLabel}</span>
-          <span className="page-header__sep">·</span>
           <span className="page-header__greet">
             {greeting}{data.name ? <>, <em>{data.name}</em></> : ''}.
           </span>

@@ -193,7 +193,11 @@ function SettingsCard({ icon, title, meta, children }) {
     <div className="card settings-card">
       <div className="settings-card__head">
         <div className="settings-card__title">
-          {icon && <Icon name={icon} size={14} />}
+          {icon && (
+            <span className="settings-card__icon">
+              <Icon name={icon} size={14} />
+            </span>
+          )}
           <span>{title}</span>
         </div>
         {meta && <div className="settings-card__meta">{meta}</div>}

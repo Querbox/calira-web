@@ -6,6 +6,8 @@ import Settings from './screens/Settings'
 import Icon from './components/Icon'
 import UpdateBanner from './components/UpdateBanner'
 import InstallPrompt from './components/InstallPrompt'
+import LegalFooter from './components/LegalFooter'
+import Legal from './screens/Legal'
 import { usePager } from './lib/usePager'
 import { useNotifications } from './hooks/useNotifications'
 
@@ -19,7 +21,14 @@ export default function App() {
   const data = useData()
   const [tab, setTab] = useState('home')
   const [enterDir, setEnterDir] = useState(null) // 'left' | 'right' | null
+  const [legal, setLegal] = useState(null) // null | 'imprint' | 'privacy' | 'disclaimer'
   const pagesRef = useRef(null)
+
+  useEffect(() => {
+    function onOpen(e) { setLegal(e.detail || 'imprint') }
+    window.addEventListener('calira:open-legal', onOpen)
+    return () => window.removeEventListener('calira:open-legal', onOpen)
+  }, [])
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', data.theme || 'clay')
@@ -81,8 +90,11 @@ export default function App() {
           {tab === 'home' && <Home />}
           {tab === 'history' && <History />}
           {tab === 'settings' && <Settings />}
+          <LegalFooter />
         </main>
       </div>
+
+      {legal && <Legal section={legal} onClose={() => setLegal(null)} />}
 
       <nav className="tabbar">
         {TABS.map((t) => (

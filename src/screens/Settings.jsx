@@ -163,6 +163,19 @@ export default function Settings() {
           Morgens, Mittags, Abends. Keine Pop-ups, keine Streaks, keine Punkte.
           <em> Nur du und der Tag.</em>
         </p>
+
+        <div className="settings-subhead">Rechtliches</div>
+        <div className="legal-links">
+          <button onClick={() => window.dispatchEvent(new CustomEvent('calira:open-legal', { detail: 'imprint' }))}>
+            <span>Impressum</span><Icon name="arrow" size={12} />
+          </button>
+          <button onClick={() => window.dispatchEvent(new CustomEvent('calira:open-legal', { detail: 'privacy' }))}>
+            <span>Datenschutz</span><Icon name="arrow" size={12} />
+          </button>
+          <button onClick={() => window.dispatchEvent(new CustomEvent('calira:open-legal', { detail: 'disclaimer' }))}>
+            <span>Medizinischer Hinweis</span><Icon name="arrow" size={12} />
+          </button>
+        </div>
       </SettingsCard>
 
       <div className="wordmark-block">

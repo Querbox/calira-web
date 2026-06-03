@@ -92,6 +92,63 @@ function weatherCodeToLabel(code) {
 }
 
 /**
+ * Fetch a full day of hourly pressure (and weather codes) for the given dateKey.
+ * Returns { hours: 0..23, pressure: number[24], weatherCode: number[24] } or null.
+ * Cached per dateKey in sessionStorage for 30 min.
+ */
+const DAY_CACHE_PREFIX = 'calira:weather:day:'
+const DAY_TTL = 30 * 60 * 1000
+
+export async function fetchDayPressure(dateKey) {
+  const cacheKey = DAY_CACHE_PREFIX + dateKey
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null')
+    if (cached && Date.now() - cached.cachedAt < DAY_TTL) return cached
+  } catch {}
+
+  const pos = await getPosition().catch(() => null)
+  if (!pos) return null
+
+  try {
+    const { latitude, longitude } = pos.coords
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=pressure_msl,weather_code&timezone=auto&start_date=${dateKey}&end_date=${dateKey}`
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const data = await res.json()
+    const h = data.hourly
+    if (!h?.time || !h?.pressure_msl) return null
+
+    const pressure = new Array(24).fill(null)
+    const weatherCode = new Array(24).fill(null)
+    for (let i = 0; i < h.time.length; i++) {
+      const hour = new Date(h.time[i]).getHours()
+      if (hour >= 0 && hour < 24) {
+        pressure[hour] = h.pressure_msl[i]
+        weatherCode[hour] = h.weather_code?.[i] ?? null
+      }
+    }
+    // fill leading/trailing nulls by nearest neighbor
+    fillNearest(pressure)
+    const result = { dateKey, pressure, weatherCode, cachedAt: Date.now() }
+    try { sessionStorage.setItem(cacheKey, JSON.stringify(result)) } catch {}
+    return result
+  } catch {
+    return null
+  }
+}
+
+function fillNearest(arr) {
+  let first = arr.findIndex((v) => v != null)
+  if (first < 0) return
+  for (let i = 0; i < first; i++) arr[i] = arr[first]
+  let last = first
+  for (let i = first + 1; i < arr.length; i++) {
+    if (arr[i] != null) last = i
+    else arr[i] = arr[last]
+  }
+}
+
+/**
  * Classify pressure change as a migraine-relevant signal.
  */
 export function pressureSignal(change3h) {

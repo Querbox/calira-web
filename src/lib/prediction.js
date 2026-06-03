@@ -135,3 +135,54 @@ export function riskColor(risk) {
   if (risk < 80) return 'var(--pain-7)'
   return 'var(--pain-10)'
 }
+
+/**
+ * Compute a 0..24 array of weather-derived risk modifiers from hourly pressure.
+ * Migraine-relevant signal: 3h pressure drops/rises ≥ 2 hPa increase risk.
+ * Returns multipliers around 1.0 (e.g. 0.95 .. 1.55).
+ */
+export function pressureModifier(pressureSeries) {
+  if (!Array.isArray(pressureSeries) || pressureSeries.length < 24) return null
+  const mod = new Array(24).fill(1)
+  for (let h = 0; h < 24; h++) {
+    const ref = pressureSeries[Math.max(0, h - 3)]
+    const cur = pressureSeries[h]
+    if (cur == null || ref == null) continue
+    const delta = cur - ref
+    const abs = Math.abs(delta)
+    if (abs < 2) { mod[h] = 1.0; continue }
+    if (delta < 0) {
+      // drop — strongest signal
+      mod[h] = 1 + Math.min(0.55, (abs - 2) / 6)
+    } else {
+      // rise — weaker signal
+      mod[h] = 1 + Math.min(0.25, (abs - 2) / 12)
+    }
+  }
+  return mod
+}
+
+/**
+ * Combine a base (history) curve with a pressure modifier.
+ * If base curve is missing/insufficient, fall back to a weather-only baseline
+ * so we still surface a probability for new users.
+ */
+export function combineWithWeather(baseCurve, pressureSeries) {
+  const mod = pressureModifier(pressureSeries)
+  if (!mod) return Array.isArray(baseCurve) ? baseCurve : null
+
+  const hasBase = Array.isArray(baseCurve) && baseCurve.length === 24
+  const out = new Array(24)
+  for (let h = 0; h < 24; h++) {
+    const base = hasBase ? baseCurve[h] : weatherBaselineForHour(h)
+    out[h] = Math.max(0, Math.min(100, base * mod[h]))
+  }
+  return out
+}
+
+// Gentle circadian baseline used only when user has no history yet.
+// Slightly elevated late morning + late afternoon, low at night.
+function weatherBaselineForHour(h) {
+  const pivots = [8, 22, 18, 14, 12, 12, 14, 18, 22, 26, 28, 28, 26, 28, 30, 30, 28, 26, 24, 22, 20, 16, 12, 10]
+  return pivots[h] ?? 20
+}

@@ -9,6 +9,7 @@ import FlareSheet, { EndFlareSheet } from '../components/FlareSheet'
 import PainDotScale from '../components/PainDotScale'
 import Icon from '../components/Icon'
 import { monthlyMedUsage } from '../lib/insights'
+import { fetchDayPressure } from '../lib/weather'
 
 const SLOT_META = {
   morning: { icon: 'sun',   tint: 'morning' },
@@ -21,8 +22,15 @@ export default function Home() {
   const [sheet, setSheet] = useState(null)
   const [defaultSlot, setDefaultSlot] = useState(null)
   const [editing, setEditing] = useState(null) // { kind: 'checkIn'|'med', entry }
+  const [dayPressure, setDayPressure] = useState(null)
 
   const key = todayKey()
+
+  useEffect(() => {
+    let cancelled = false
+    fetchDayPressure(key).then((p) => { if (!cancelled) setDayPressure(p) })
+    return () => { cancelled = true }
+  }, [key])
   const today = data.checkIns.filter((c) => dayKeyOf(c.timestamp) === key)
   const meds = data.medications.filter((m) => dayKeyOf(m.timestamp) === key)
   const activeFlare = data.flares.find((f) => !f.endTime)
@@ -154,6 +162,7 @@ export default function Home() {
           medications={data.medications}
           flares={data.flares}
           dateKey={key}
+          dayPressure={dayPressure}
         />
       </div>
 

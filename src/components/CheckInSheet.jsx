@@ -96,6 +96,27 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
     onClose()
   }
 
+  function quickPainFree() {
+    // One-tap "schmerzfrei" check-in — minimal data, sensible defaults.
+    const payload = {
+      timeSlot: autoSlot,
+      painLevel: 0,
+      dominantType: 'unclear',
+      dominantTypes: [],
+      triggers: [],
+      symptoms: [],
+      stressLevel: 0,
+      neckTension: 0,
+      functionalLevel: 'unaffected',
+      notes: '',
+      timestamp,
+      weather,
+    }
+    if (isEdit) actions.updateCheckIn(existing.id, payload)
+    else actions.addCheckIn(payload)
+    onClose()
+  }
+
   function del() {
     if (!isEdit) return
     if (confirm('Diesen Check-in löschen?')) {
@@ -132,6 +153,18 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
 
         {step === 0 && (
           <div className="sheet__body">
+            {!isEdit && (
+              <button className="painfree-shortcut" onClick={quickPainFree}>
+                <div className="painfree-shortcut__icon">
+                  <Icon name="check" size={16} />
+                </div>
+                <div className="painfree-shortcut__body">
+                  <div className="painfree-shortcut__title">Gerade schmerzfrei</div>
+                  <div className="painfree-shortcut__sub">Tippen — fertig, ohne weitere Fragen</div>
+                </div>
+                <Icon name="arrow" size={14} className="painfree-shortcut__chev" />
+              </button>
+            )}
             <div className="dial">
               <div className="dial__num" style={{ color: painColor(painLevel) }}>{painLevel}</div>
               <div className="dial__caption">{painLabel(painLevel)}</div>

@@ -3,11 +3,13 @@
 
 /* ── Print styles ──────────────────────────────────────────── */
 @media print {
-  @page { size: A4; margin: 12mm 14mm 16mm; }
+  /* Reserve bottom margin for the fixed footer */
+  @page { size: A4; margin: 12mm 14mm 22mm; }
 
-  /* Reset everything else */
+  /* Hide app shell, show only the report */
   html, body { margin: 0; padding: 0; background: #fff !important; }
-  #root, .app, .app__main, .tabbar, .sheet-backdrop { display: none !important; }
+  #root, .app, .app__main, .app__pages, .tabbar, .sheet-backdrop,
+  .install-prompt, .install-help-backdrop, .update-banner, .legal { display: none !important; }
   html, body {
     color: #1d1814 !important;
     font-family: 'Instrument Sans', system-ui, sans-serif !important;
@@ -17,14 +19,15 @@
     print-color-adjust: exact;
   }
 
+  /* Report flows in normal document order so multi-page content paginates */
   .pr {
     display: block !important;
-    position: absolute;
-    inset: 0;
-    z-index: 99999;
+    position: static !important;
     background: #fff;
     color: #1d1814;
     padding: 0;
+    margin: 0;
+    width: 100%;
   }
 
   /* ── Header ── */
@@ -274,14 +277,20 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* ── Footer ── */
+  /* ── Footer (repeats on every printed page) ── */
   .pr__footer {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 0 14mm 6mm;
+    padding: 4mm 14mm 6mm;
+    background: #fff;
   }
+  /* Make sure flowing content doesn't get hidden behind the fixed footer */
+  .pr > *:last-of-type { margin-bottom: 6mm; }
+  /* Table rows shouldn't split awkwardly across pages */
+  .pr__table tr { break-inside: avoid; }
+  .pr__table thead { display: table-header-group; }
   .pr__footer-line {
     height: 0.4pt;
     background: #c4baa8;

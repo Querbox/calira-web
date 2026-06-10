@@ -139,7 +139,7 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
               {currentSlotMeta?.label} ({currentSlotMeta?.desc}) · {isEdit ? 'bearbeiten' : 'Check-in'}
             </div>
             <h2 className="sheet__title">
-              {isEdit ? <>Eintrag <em>anpassen.</em></> : <>Wie geht es <em>gerade?</em></>}
+              {isEdit ? <>Diesen Moment <em>überschreiben.</em></> : <>Wie geht es <em>gerade?</em></>}
             </h2>
           </div>
           <button className="sheet__close" onClick={onClose} aria-label="Schließen">×</button>
@@ -318,7 +318,7 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
             </button>
           ) : (
             <button className="btn btn-accent" onClick={submit}>
-              <Icon name="check" size={14} /> {isEdit ? 'speichern' : 'eintragen'}
+              <Icon name="check" size={14} /> {isEdit ? 'überschreiben' : 'eintragen'}
             </button>
           )}
         </div>

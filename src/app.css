@@ -1896,6 +1896,43 @@
   color: var(--ink);
 }
 
+/* ─── Slot picker primary action ─────────────────────────── */
+.slot-picker__primary {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--clay);
+  color: #fff;
+  text-align: left;
+  transition: transform 0.15s, box-shadow 0.2s;
+  box-shadow: var(--shadow-card);
+}
+.slot-picker__primary:active { transform: scale(0.985); }
+.slot-picker__primary:hover { box-shadow: var(--shadow-hover); }
+.slot-picker__primary-icon {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.slot-picker__primary-title {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+.slot-picker__primary-sub {
+  font-family: var(--sans);
+  font-size: 12px;
+  opacity: 0.85;
+  margin-top: 1px;
+}
+
 /* ─── Painfree shortcut (top of check-in) ────────────────── */
 .painfree-shortcut {
   display: grid;
@@ -2120,6 +2157,21 @@
   color: #fff;
   display: flex; align-items: center; justify-content: center;
 }
+.slot-tile__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--success, #7d9f78);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+.slot-tile__count .icon { opacity: 0.85; }
 .slot-tile--now {
   outline: 2px solid var(--clay);
   outline-offset: -2px;

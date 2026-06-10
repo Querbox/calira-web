@@ -6,6 +6,7 @@ import DailyTimeline from '../components/DailyTimeline'
 import CheckInSheet from '../components/CheckInSheet'
 import MedicationSheet from '../components/MedicationSheet'
 import FlareSheet, { EndFlareSheet } from '../components/FlareSheet'
+import SlotPicker from '../components/SlotPicker'
 import Icon from '../components/Icon'
 import { monthlyMedUsage } from '../lib/insights'
 import { fetchDayPressure } from '../lib/weather'
@@ -24,6 +25,7 @@ export default function Home() {
   const data = useData()
   const [sheet, setSheet] = useState(null)
   const [defaultSlot, setDefaultSlot] = useState(null)
+  const [pickerSlot, setPickerSlot] = useState(null)
   const [editing, setEditing] = useState(null)
   const [dayPressure, setDayPressure] = useState(null)
   const [tipDismissed, setTipDismissed] = useState(() => {
@@ -72,14 +74,20 @@ export default function Home() {
     return { state: 'ok', summary: s, weatherOnly, hasPressure: !!pressureSeries }
   }, [data.checkIns, key, dayPressure])
 
+  // Mehrere Einträge pro Slot sind erlaubt — Schmerz schwankt im Lauf eines Vormittags.
+  function slotEntries(slotId) {
+    return today.filter((c) => c.timeSlot === slotId).sort((a, b) => a.timestamp - b.timestamp)
+  }
+
   function openCheckIn(slot) {
-    const existing = today.find((c) => c.timeSlot === slot)
-    if (existing) {
-      setEditing({ kind: 'checkIn', entry: existing })
-      setSheet('checkin-edit')
-    } else {
+    const entries = slotEntries(slot)
+    if (entries.length === 0) {
+      // erster Eintrag in diesem Slot → direkt anlegen
       setDefaultSlot(slot)
       setSheet('checkin')
+    } else {
+      // schon mind. ein Eintrag → Picker zeigen (Neuer Eintrag vs. bearbeiten)
+      setPickerSlot(slot)
     }
   }
 
@@ -148,15 +156,15 @@ export default function Home() {
       </div>
       <div className="slots">
         {TIME_SLOTS.map((slot) => {
-          const entry = today.find((c) => c.timeSlot === slot.id)
+          const entries = slotEntries(slot.id)
+          const latest = entries[entries.length - 1]
           const meta = SLOT_META[slot.id]
-          const isCurrent = !entry && slot.id === currentSlotId
-          // ist dieser slot zeitlich schon vorbei?
-          const slotPassed = !entry && !isCurrent && hasPassed(slot, now)
+          const isCurrent = !latest && slot.id === currentSlotId
+          const slotPassed = !latest && !isCurrent && hasPassed(slot, now)
           const klass = [
             'slot-tile',
             `card--tint-${meta.tint}`,
-            entry ? 'slot-tile--done' : 'slot-tile--open',
+            latest ? 'slot-tile--done' : 'slot-tile--open',
             isCurrent ? 'slot-tile--now' : '',
             slotPassed ? 'slot-tile--past' : '',
           ].filter(Boolean).join(' ')
@@ -166,19 +174,28 @@ export default function Home() {
                 <div className="slot-tile__icon-wrap">
                   <Icon name={meta.icon} size={16} />
                 </div>
-                {entry && (
+                {latest && entries.length === 1 && (
                   <div className="slot-tile__check" aria-label="erfasst">
                     <Icon name="check" size={12} />
                   </div>
                 )}
-                {!entry && isCurrent && <div className="slot-tile__pulse" aria-hidden />}
+                {entries.length > 1 && (
+                  <div className="slot-tile__count" title={`${entries.length} Einträge`}>
+                    <Icon name="check" size={10} /> {entries.length}
+                  </div>
+                )}
+                {!latest && isCurrent && <div className="slot-tile__pulse" aria-hidden />}
               </div>
               <div className="slot-tile__label">{slot.label}</div>
-              {entry ? (
+              {latest ? (
                 <div className="slot-tile__entry">
-                  <span className="slot-tile__num" style={{ color: painColor(entry.painLevel) }}>{entry.painLevel}</span>
+                  <span className="slot-tile__num" style={{ color: painColor(latest.painLevel) }}>{latest.painLevel}</span>
                   <span className="slot-tile__num-suffix">/10</span>
-                  <div className="slot-tile__type">{painTypeLabel(entry.dominantTypes || entry.dominantType)}</div>
+                  <div className="slot-tile__type">
+                    {entries.length > 1
+                      ? `zuletzt ${new Date(latest.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`
+                      : painTypeLabel(latest.dominantTypes || latest.dominantType)}
+                  </div>
                 </div>
               ) : (
                 <div className="slot-tile__cta">
@@ -303,6 +320,24 @@ export default function Home() {
           onClose={() => setSheet(null)}
         />
       )}
+      {pickerSlot && (
+        <SlotPicker
+          slotId={pickerSlot}
+          entries={slotEntries(pickerSlot)}
+          onNewEntry={() => {
+            setDefaultSlot(pickerSlot)
+            setPickerSlot(null)
+            setSheet('checkin')
+          }}
+          onEditEntry={(entry) => {
+            setEditing({ kind: 'checkIn', entry })
+            setPickerSlot(null)
+            setSheet('checkin-edit')
+          }}
+          onClose={() => setPickerSlot(null)}
+        />
+      )}
+
       {sheet === 'day-detail' && (
         <DayDetail
           day={{ key, date: new Date(), checkIns: today, meds, flares: dayFlares, avg, max }}

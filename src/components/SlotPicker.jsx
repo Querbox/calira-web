@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { painColor, painLabel, painTypeLabel, slotMeta } from '../lib/pain'
 import { useDragDownToDismiss } from '../lib/useSwipe'
 import Icon from './Icon'
@@ -21,7 +22,7 @@ export default function SlotPicker({ slotId, entries, onNewEntry, onEditEntry, o
 
   const sorted = [...entries].sort((a, b) => a.timestamp - b.timestamp)
 
-  return (
+  return createPortal((
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" ref={sheetRef} onClick={(e) => e.stopPropagation()}>
         <div className="sheet__grabber" data-sheet-handle />
@@ -79,5 +80,5 @@ export default function SlotPicker({ slotId, entries, onNewEntry, onEditEntry, o
         </div>
       </div>
     </div>
-  )
+  ), document.body)
 }

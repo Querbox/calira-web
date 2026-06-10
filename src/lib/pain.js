@@ -13,6 +13,31 @@ export const FUNCTIONAL_LEVELS = [
   { id: 'severe', label: 'stark eingeschränkt' },
 ]
 
+// Common headache/migraine accompanying symptoms (loosely ICHD-aligned)
+export const SYMPTOMS = [
+  { id: 'nausea',         label: 'Übelkeit' },
+  { id: 'vomiting',       label: 'Erbrechen' },
+  { id: 'photophobia',    label: 'Lichtempfindlichkeit' },
+  { id: 'phonophobia',    label: 'Geräuschempfindlichkeit' },
+  { id: 'osmophobia',     label: 'Geruchsempfindlichkeit' },
+  { id: 'dizziness',      label: 'Schwindel' },
+  { id: 'aura',           label: 'Sehstörungen / Aura' },
+  { id: 'concentration',  label: 'Konzentrationsschwäche' },
+  { id: 'fatigue',        label: 'Müdigkeit' },
+  { id: 'irritability',   label: 'Reizbarkeit' },
+  { id: 'tension',        label: 'Verspannungen' },
+  { id: 'tingling',       label: 'Taubheit / Kribbeln' },
+  { id: 'stomach',        label: 'Bauchschmerzen' },
+]
+
+export function symptomLabel(id) {
+  return SYMPTOMS.find((s) => s.id === id)?.label || id
+}
+export function symptomsLabel(ids) {
+  if (!Array.isArray(ids) || !ids.length) return ''
+  return ids.map(symptomLabel).join(', ')
+}
+
 export const TIME_SLOTS = [
   { id: 'morning', label: 'Morgens',  from: 5,  to: 12, desc: '5 – 12 Uhr' },
   { id: 'midday',  label: 'Mittags',  from: 12, to: 18, desc: '12 – 18 Uhr' },

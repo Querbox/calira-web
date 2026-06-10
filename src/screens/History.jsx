@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { dayKeyOf, todayKey } from '../lib/storage'
 import { useData } from '../lib/store'
-import { painColor, painLabel, painTypeLabel } from '../lib/pain'
+import { painColor, painLabel, painTypeLabel, symptomsLabel } from '../lib/pain'
 import { useSwipe, useDragDownToDismiss } from '../lib/useSwipe'
 import DailyTimeline from '../components/DailyTimeline'
 import CheckInSheet from '../components/CheckInSheet'
@@ -273,6 +273,11 @@ export function DayDetail({ day, data, dayList = [], onNavigate, onClose }) {
                           {painLabel(c.painLevel)}, {painTypeLabel(c.dominantType)}
                         </div>
                         <div className="entry__meta">Stress {c.stressLevel}/10 · Nacken {c.neckTension}/10</div>
+                        {c.symptoms?.length > 0 && (
+                          <div className="entry__symptoms">
+                            <Icon name="spark" size={11} /> {symptomsLabel(c.symptoms)}
+                          </div>
+                        )}
                       </div>
                       <span className="entry__num" style={{ color: painColor(c.painLevel) }}>{c.painLevel}</span>
                     </button>

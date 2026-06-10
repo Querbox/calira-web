@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { PAIN_TYPES, FUNCTIONAL_LEVELS, TIME_SLOTS, painColor, painLabel, slotForTimestamp, slotMeta } from '../lib/pain'
+import { PAIN_TYPES, FUNCTIONAL_LEVELS, SYMPTOMS, painColor, painLabel, slotForTimestamp, slotMeta } from '../lib/pain'
 import { actions } from '../lib/store'
 import { useSwipe, useDragDownToDismiss } from '../lib/useSwipe'
 import { fetchWeather, pressureSignal } from '../lib/weather'
@@ -28,6 +28,10 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
     if (existing?.triggers) return existing.triggers
     return []
   })
+  const [symptoms, setSymptoms] = useState(() => {
+    if (existing?.symptoms) return existing.symptoms
+    return []
+  })
   const [functional, setFunctional] = useState(existing?.functionalLevel ?? 'unaffected')
   const [stress, setStress] = useState(existing?.stressLevel ?? 3)
   const [neck, setNeck] = useState(existing?.neckTension ?? 3)
@@ -39,7 +43,7 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
   const currentSlotMeta = slotMeta(autoSlot)
 
   const sheetRef = useRef(null)
-  const stepCount = 5 // pain, type+triggers, function, weather+notes
+  const stepCount = 6 // pain, type, symptoms, triggers, function, weather+notes
 
   // Auto-fetch weather on mount (only for new check-ins)
   useEffect(() => {
@@ -79,6 +83,7 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
       dominantType: types[0] || 'unclear', // backward compat
       dominantTypes: types,
       triggers,
+      symptoms,
       stressLevel: stress,
       neckTension: neck,
       functionalLevel: functional,
@@ -163,6 +168,26 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
 
         {step === 2 && (
           <div className="sheet__body">
+            <div className="field-label">Begleitsymptome <span style={{ color: 'var(--ink-faint)', fontWeight: 450 }}>· mehrere möglich, optional</span></div>
+            <p className="muted" style={{ fontSize: 12, marginBottom: 4 }}>
+              Was fühlst du noch außer dem Kopfschmerz selbst?
+            </p>
+            <div className="chips">
+              {SYMPTOMS.map((s) => (
+                <button
+                  key={s.id}
+                  className={`chip ${symptoms.includes(s.id) ? 'is-active' : ''}`}
+                  onClick={() => toggleMulti(symptoms, setSymptoms, s.id)}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="sheet__body">
             <div className="field-label">Vermutete Auslöser <span style={{ color: 'var(--ink-faint)', fontWeight: 450 }}>· mehrere möglich, optional</span></div>
             <div className="chips">
               {TRIGGERS.map((t) => (
@@ -178,7 +203,7 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <div className="sheet__body">
             <div className="field-label">Funktionale Einschränkung</div>
             <div className="chips">
@@ -193,7 +218,7 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
           </div>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <div className="sheet__body">
             {weather && (
               <div className="weather-card">

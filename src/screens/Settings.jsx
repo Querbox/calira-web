@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useData, actions } from '../lib/store'
 import Icon from '../components/Icon'
 import PrintReport from '../components/PrintReport'
-import { getPrefs, setPrefs, permissionStatus, requestPermission, fireTest } from '../lib/notify'
+import { getPrefs, setPrefs, permissionStatus, requestPermission, fireTest, diagnose, triggerNow } from '../lib/notify'
+import { fetchDayPressure } from '../lib/weather'
+import { todayKey } from '../lib/storage'
 
 const THEMES = [
   { id: 'clay',  label: 'Clay',  swatch: '#ec7a5a' },
@@ -285,15 +287,32 @@ function DisplayCard({ data }) {
 /* ─────────── Notifications ─────────── */
 
 function NotificationsCard() {
+  const data = useData()
   const [prefs, setPrefsState] = useState(getPrefs())
   const [perm, setPerm] = useState(permissionStatus())
   const [testFeedback, setTestFeedback] = useState(null)
+  const [diag, setDiag] = useState([])
+  const [dayPressure, setDayPressure] = useState(null)
 
   useEffect(() => {
     const onFocus = () => setPerm(permissionStatus())
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
   }, [])
+
+  // Pressure for diagnostics
+  useEffect(() => {
+    let cancelled = false
+    fetchDayPressure(todayKey()).then((p) => { if (!cancelled) setDayPressure(p) })
+    return () => { cancelled = true }
+  }, [])
+
+  // Re-diagnose whenever prefs / perm / data / pressure changes
+  useEffect(() => {
+    setDiag(diagnose({ data, dayPressure }))
+    const id = setInterval(() => setDiag(diagnose({ data, dayPressure })), 30000)
+    return () => clearInterval(id)
+  }, [data, dayPressure, prefs, perm])
 
   function update(patch) {
     const next = setPrefs(patch)
@@ -313,6 +332,13 @@ function NotificationsCard() {
   async function onTest() {
     const ok = await fireTest()
     setTestFeedback(ok ? 'gesendet' : 'fehlgeschlagen')
+    setTimeout(() => setTestFeedback(null), 2500)
+  }
+
+  async function onTriggerNow() {
+    const count = await triggerNow({ data, dayPressure })
+    setTestFeedback(count > 0 ? `${count} gesendet` : 'nichts ausgelöst')
+    setDiag(diagnose({ data, dayPressure }))
     setTimeout(() => setTestFeedback(null), 2500)
   }
 
@@ -399,14 +425,30 @@ function NotificationsCard() {
             </label>
           </div>
 
+          <div className="settings-subhead">Status</div>
+          <ul className="notify-status">
+            {diag.map((row) => (
+              <li key={row.id} className={`notify-status__row ${row.armed ? 'is-armed' : ''}`}>
+                <span className="notify-status__dot" />
+                <div>
+                  <div className="notify-status__label">{row.label}</div>
+                  <div className="notify-status__detail">{row.detail}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+
           <div className="settings-grid-2" style={{ marginTop: 14 }}>
-            <button className="btn btn-soft" onClick={onTest}>
-              <Icon name="spark" size={14} /> Test {testFeedback && `· ${testFeedback}`}
+            <button className="btn btn-soft" onClick={onTriggerNow}>
+              <Icon name="refresh" size={14} /> Jetzt prüfen {testFeedback && `· ${testFeedback}`}
             </button>
-            <button className="btn btn-soft" onClick={() => update({ enabled: false })}>
-              <Icon name="check" size={14} /> Deaktivieren
+            <button className="btn btn-soft" onClick={onTest}>
+              <Icon name="spark" size={14} /> Test-Hinweis
             </button>
           </div>
+          <button className="btn btn-text" style={{ marginTop: 8 }} onClick={() => update({ enabled: false })}>
+            Benachrichtigungen deaktivieren
+          </button>
         </>
       )}
     </SettingsCard>

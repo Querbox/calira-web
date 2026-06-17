@@ -44,6 +44,20 @@ export function permissionStatus() {
   return Notification.permission // 'granted' | 'denied' | 'default'
 }
 
+/** True when the app runs as an installed PWA (home-screen icon, no browser chrome). */
+export function isStandalone() {
+  if (typeof window === 'undefined') return false
+  if (window.matchMedia?.('(display-mode: standalone)').matches) return true
+  if (window.navigator.standalone === true) return true // iOS Safari
+  return false
+}
+
+/** Returns true if the device is iOS (iPhone/iPad). */
+export function isIOS() {
+  if (typeof window === 'undefined') return false
+  return /iPad|iPhone|iPod/.test(window.navigator.userAgent) && !window.MSStream
+}
+
 export async function requestPermission() {
   if (typeof Notification === 'undefined') return 'unsupported'
   try {

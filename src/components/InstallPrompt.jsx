@@ -38,32 +38,38 @@ export default function InstallPrompt() {
   const [showIOSHelp, setShowIOSHelp] = useState(false)
 
   useEffect(() => {
-    if (isStandalone()) return
-    if (dismissedRecently()) return
-
     function onPrompt(e) {
       e.preventDefault()
       setDeferred(e)
-      setShow(true)
+      if (!isStandalone() && !dismissedRecently()) setShow(true)
     }
     window.addEventListener('beforeinstallprompt', onPrompt)
 
     function onInstalled() { setShow(false); setDeferred(null) }
     window.addEventListener('appinstalled', onInstalled)
 
-    // iOS Safari never fires beforeinstallprompt, so we show our own help.
-    // Delay a bit so it doesn't appear on first paint.
+    // External request (e.g. from Settings notification banner)
+    function onExternalOpen() {
+      if (isStandalone()) return
+      setShow(true)
+      // iOS Safari has no native prompt — show the help directly
+      if (isIOSSafari() && !deferred) setShowIOSHelp(true)
+    }
+    window.addEventListener('calira:open-install', onExternalOpen)
+
+    // Auto-show paths (only when not dismissed)
     let iosTimer = null
-    if (isIOSSafari()) {
+    if (!isStandalone() && !dismissedRecently() && isIOSSafari()) {
       iosTimer = setTimeout(() => setShow(true), 4000)
     }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', onPrompt)
       window.removeEventListener('appinstalled', onInstalled)
+      window.removeEventListener('calira:open-install', onExternalOpen)
       if (iosTimer) clearTimeout(iosTimer)
     }
-  }, [])
+  }, [deferred])
 
   function dismiss() {
     try { localStorage.setItem(DISMISS_KEY, String(Date.now())) } catch {}

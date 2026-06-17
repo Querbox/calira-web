@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useData, actions } from '../lib/store'
 import Icon from '../components/Icon'
 import PrintReport from '../components/PrintReport'
-import { getPrefs, setPrefs, permissionStatus, requestPermission, fireTest, diagnose, triggerNow } from '../lib/notify'
+import { getPrefs, setPrefs, permissionStatus, requestPermission, fireTest, diagnose, triggerNow, isStandalone, isIOS } from '../lib/notify'
 import { fetchDayPressure } from '../lib/weather'
 import { todayKey } from '../lib/storage'
 
@@ -286,6 +286,58 @@ function DisplayCard({ data }) {
 
 /* ─────────── Notifications ─────────── */
 
+function ReachExplainer() {
+  const installed = isStandalone()
+  const ios = isIOS()
+  const reachState = installed ? 'good' : (ios ? 'ios' : 'browser')
+
+  if (reachState === 'good') {
+    return (
+      <div className={`reach reach--good`}>
+        <div className="reach__icon"><Icon name="check" size={14} /></div>
+        <div className="reach__body">
+          <div className="reach__title">Calira ist als App installiert</div>
+          <div className="reach__text">
+            Hinweise erscheinen auch wenn du gerade in einer anderen App bist —
+            solange Calira im Hintergrund lebt. Nach <em>komplettem Beenden</em>
+            der App schweigt sie bis zum nächsten Öffnen (technisch unvermeidbar
+            ohne eigenen Server).
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="reach reach--warn">
+      <div className="reach__icon"><Icon name="bolt" size={14} /></div>
+      <div className="reach__body">
+        <div className="reach__title">Hinweise kommen nur im Vordergrund</div>
+        <div className="reach__text">
+          Solange Calira im Browser-Tab läuft, wirst du benachrichtigt. Im
+          {' '}<em>Hintergrund</em> oder bei geschlossenem Tab leider nicht —
+          das geht nur als <em>installierte App</em>.
+        </div>
+        <button
+          className="reach__cta"
+          onClick={() => window.dispatchEvent(new CustomEvent('calira:open-install'))}
+        >
+          {ios ? 'So fügst du Calira zum Home-Bildschirm hinzu →' : 'Calira als App installieren →'}
+        </button>
+        <details className="reach__more">
+          <summary>Warum?</summary>
+          <p>
+            Echte Push-Hinweise bei geschlossener App brauchen einen Server, der
+            die Hinweise schickt. Calira hat <em>keinen Server</em> — alle deine
+            Daten bleiben lokal auf deinem Gerät, damit nichts an Dritte abfließt.
+            Der Preis: ohne Server kein echter Background-Push.
+          </p>
+        </details>
+      </div>
+    </div>
+  )
+}
+
 function NotificationsCard() {
   const data = useData()
   const [prefs, setPrefsState] = useState(getPrefs())
@@ -384,9 +436,7 @@ function NotificationsCard() {
 
       {enabled && (
         <>
-          <p className="settings-row__hint">
-            Aktiv solange Calira geöffnet ist (oder als Home-Screen-App im Hintergrund läuft).
-          </p>
+          <ReachExplainer />
 
           <div className="settings-subhead">Welche Hinweise</div>
           <div className="notify-list">

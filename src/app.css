@@ -2062,24 +2062,32 @@
 }
 .scale-picker__row {
   display: grid;
-  grid-template-columns: repeat(var(--cells, 11), 1fr);
-  gap: 4px;
+  /* minmax(0, 1fr) lets cells actually shrink below their content size,
+     otherwise the grid blows past the container on narrow phones. */
+  grid-template-columns: repeat(var(--cells, 11), minmax(0, 1fr));
+  gap: 3px;
+  width: 100%;
 }
 .scale-cell {
   position: relative;
-  aspect-ratio: 1;
-  min-height: 36px;
+  min-width: 0;
+  height: 42px;
+  padding: 0;
   border-radius: 10px;
   background: var(--bg-soft);
   color: var(--ink-soft);
   font-family: var(--mono);
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.12s, background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+@media (max-width: 380px) {
+  .scale-picker__row { gap: 2px; }
+  .scale-cell { height: 38px; font-size: 12px; border-radius: 8px; }
 }
 .scale-cell:active { transform: scale(0.92); }
 .scale-cell.is-active {

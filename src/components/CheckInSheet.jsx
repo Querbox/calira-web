@@ -5,6 +5,7 @@ import { useSwipe, useDragDownToDismiss } from '../lib/useSwipe'
 import { fetchWeather, pressureSignal } from '../lib/weather'
 import Icon from './Icon'
 import TimePicker from './TimePicker'
+import ScalePicker from './ScalePicker'
 
 const SLOT_ICON = { morning: 'sun', midday: 'cloud', evening: 'moon' }
 
@@ -169,15 +170,13 @@ export default function CheckInSheet({ defaultSlot, existing, onClose }) {
               <div className="dial__num" style={{ color: painColor(painLevel) }}>{painLevel}</div>
               <div className="dial__caption">{painLabel(painLevel)}</div>
             </div>
-            <input
-              type="range" min={0} max={10}
+            <ScalePicker
               value={painLevel}
-              onChange={(e) => setPainLevel(Number(e.target.value))}
-              className="slider"
-              style={{ '--fill': `${painLevel * 10}%` }}
-              aria-label="Schmerzlevel"
+              onChange={setPainLevel}
+              colored
+              lowLabel="0 — keine"
+              highLabel="10 — sehr stark"
             />
-            <div className="slider-scale"><span>0 — keine</span><span>5</span><span>sehr stark — 10</span></div>
             <TimePicker timestamp={timestamp} onChange={setTimestamp} />
           </div>
         )}
@@ -334,14 +333,7 @@ function SliderField({ label, value, onChange }) {
         <span className="slider-field__label">{label}</span>
         <span className="slider-field__value">{value} / 10</span>
       </div>
-      <input
-        type="range" min={0} max={10}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="slider"
-        style={{ '--fill': `${value * 10}%` }}
-        aria-label={label}
-      />
+      <ScalePicker value={value} onChange={onChange} />
     </div>
   )
 }

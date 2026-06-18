@@ -3,6 +3,7 @@ import { actions } from '../lib/store'
 import { painColor, painLabel } from '../lib/pain'
 import { useDragDownToDismiss } from '../lib/useSwipe'
 import Icon from './Icon'
+import ScalePicker from './ScalePicker'
 
 const TRIGGERS = [
   'Wetter', 'Stress', 'Schlaf', 'Bildschirm', 'Hunger', 'Hormonell', 'Lärm', 'unklar',
@@ -61,14 +62,15 @@ export default function FlareSheet({ onClose }) {
             <div className="dial__num" style={{ color: painColor(intensity) }}>{intensity}</div>
             <div className="dial__caption">{painLabel(intensity)}</div>
           </div>
-          <input
-            type="range" min={1} max={10} value={intensity}
-            onChange={(e) => setIntensity(Number(e.target.value))}
-            className="slider"
-            style={{ '--fill': `${intensity * 10}%` }}
-            aria-label="Intensität"
+          <ScalePicker
+            value={intensity}
+            onChange={setIntensity}
+            min={1}
+            max={10}
+            colored
+            lowLabel="1 — gerade beginnend"
+            highLabel="10 — am stärksten"
           />
-          <div className="slider-scale"><span>1 — gerade beginnend</span><span>10 — am stärksten</span></div>
 
           <div className="field-label">Vermuteter Auslöser <span style={{ color: 'var(--ink-faint)', fontWeight: 450 }}>· optional</span></div>
           <div className="chips">
@@ -151,13 +153,7 @@ export function EndFlareSheet({ flare, suggestedPeak, onClose }) {
             <div className="dial__num" style={{ color: painColor(peak), fontSize: 100 }}>{peak}</div>
             <div className="dial__caption">{painLabel(peak)}</div>
           </div>
-          <input
-            type="range" min={1} max={10} value={peak}
-            onChange={(e) => setPeak(Number(e.target.value))}
-            className="slider"
-            style={{ '--fill': `${peak * 10}%` }}
-            aria-label="Spitzenintensität"
-          />
+          <ScalePicker value={peak} onChange={setPeak} min={1} max={10} colored />
         </div>
 
         <div className="sheet__actions">
